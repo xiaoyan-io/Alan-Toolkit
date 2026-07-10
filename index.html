@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>我的工具导航</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧭</text></svg>">
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <h1>🧭 我的工具导航</h1>
+      <button id="themeToggle" aria-label="切换主题">🌙</button>
+    </div>
+    <div class="search-wrap">
+      <input type="text" id="searchInput" placeholder="搜索工具..." autocomplete="off">
+    </div>
+  </header>
+
+  <main>
+    <nav class="tabs" id="tabs"></nav>
+    <div class="grid" id="grid"></div>
+  </main>
+
+  <button id="addBtn" class="fab" aria-label="添加工具">+</button>
+
+  <div class="modal-overlay" id="modal">
+    <div class="modal">
+      <h2>添加工具</h2>
+      <form id="addForm" autocomplete="off">
+        <label>
+          <span>名称</span>
+          <input type="text" name="name" required placeholder="例如: Notion">
+        </label>
+        <label>
+          <span>URL</span>
+          <input type="url" name="url" required placeholder="https://...">
+        </label>
+        <label>
+          <span>分类</span>
+          <select name="category">
+            <option value="dev">开发工具</option>
+            <option value="ai">AI 工具</option>
+            <option value="custom">自定义</option>
+          </select>
+        </label>
+        <label>
+          <span>图标</span>
+          <input type="text" name="icon" placeholder="🔧" maxlength="2">
+        </label>
+        <div class="modal-actions">
+          <button type="button" id="modalCancel">取消</button>
+          <button type="submit">保存</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
