@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>工具集 - Alan-Toolkit</title>
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <h1>🔧 工具集</h1>
+      <button id="themeToggle" aria-label="切换主题">🌙</button>
+    </div>
+  </header>
+
+  <main>
+    <div class="grid">
+      <a href="template/" class="card" style="--card-color: #6c63ff">
+        <span class="card-icon">📋</span>
+        <span class="card-name">工具模板</span>
+      </a>
+      <a href="../" class="card" style="--card-color: #6c63ff">
+        <span class="card-icon">🏠</span>
+        <span class="card-name">返回主页</span>
+      </a>
+    </div>
+  </main>
+
+  <script>
+    const toggle = document.getElementById('themeToggle');
+    const html = document.documentElement;
+    function getTheme() { return localStorage.getItem('theme') || 'light'; }
+    function saveTheme(t) { localStorage.setItem('theme', t); }
+    html.setAttribute('data-theme', getTheme());
+    toggle.textContent = getTheme() === 'dark' ? '☀️' : '🌙';
+    toggle.addEventListener('click', () => {
+      const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      html.setAttribute('data-theme', next);
+      toggle.textContent = next === 'dark' ? '☀️' : '🌙';
+      saveTheme(next);
+    });
+  </script>
+</body>
+</html>

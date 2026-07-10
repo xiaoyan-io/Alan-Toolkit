@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AuntHouse 图纸助手 - Alan-Toolkit</title>
+  <link rel="stylesheet" href="../../style.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <h1>🏗️ AuntHouse 图纸助手</h1>
+      <button id="themeToggle" aria-label="切换主题">🌙</button>
+    </div>
+  </header>
+
+  <main>
+    <div class="row row-top">
+      <section id="project-overview" class="card-section">
+        <h2>📋 项目概览</h2>
+        <div id="overview-content">
+          <p><span class="label">项目名称</span><span id="project-name">未命名项目</span></p>
+          <p><span class="label">创建时间</span><span id="project-time">-</span></p>
+          <p><span class="label">已加载文件</span><span id="file-count">0</span></p>
+          <div id="type-badges"></div>
+        </div>
+      </section>
+
+      <section id="file-import" class="card-section">
+        <h2>📤 文件导入</h2>
+        <div id="drop-zone">
+          <div id="drop-icon">📂</div>
+          <p>将文件拖拽到此处</p>
+          <p class="or">或</p>
+          <label id="file-select-label">
+            选择文件
+            <input type="file" id="file-input" multiple accept=".svg,.csv,.ifc,.json" hidden>
+          </label>
+          <p class="hint">支持 SVG · CSV · IFC · JSON</p>
+        </div>
+      </section>
+    </div>
+
+    <section id="file-status" class="card-section">
+      <h2>📂 文件状态</h2>
+      <div id="file-table-wrap">
+        <table id="file-table">
+          <thead>
+            <tr>
+              <th>文件名</th>
+              <th>类型</th>
+              <th>大小</th>
+              <th>状态</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="file-tbody"></tbody>
+        </table>
+        <div id="file-empty" class="empty-state">暂无文件，请先导入</div>
+      </div>
+    </section>
+
+    <div class="row row-bottom">
+      <section id="preview-area" class="card-section">
+        <h2>👁️ 预览</h2>
+        <div id="preview-content">
+          <p class="empty-state">选择一个文件查看预览</p>
+        </div>
+      </section>
+
+      <section id="analysis-tasks" class="card-section">
+        <h2>⚙️ 分析任务</h2>
+        <div id="tasks-content">
+          <div class="task-item planned">
+            <div class="task-icon">📐</div>
+            <div class="task-info">
+              <span class="task-name">尺寸标注识别</span>
+              <span class="task-badge">计划中</span>
+            </div>
+          </div>
+          <div class="task-item planned">
+            <div class="task-icon">🏠</div>
+            <div class="task-info">
+              <span class="task-name">房间布局分析</span>
+              <span class="task-badge">计划中</span>
+            </div>
+          </div>
+          <div class="task-item planned">
+            <div class="task-icon">🔌</div>
+            <div class="task-info">
+              <span class="task-name">管线冲突检测</span>
+              <span class="task-badge">计划中</span>
+            </div>
+          </div>
+          <p class="task-footnote">分析引擎即将推出</p>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>

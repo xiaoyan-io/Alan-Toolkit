@@ -1,40 +1,9 @@
+@import url("assets/variables.css");
+
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-}
-
-:root {
-  --bg: #f0f2f5;
-  --card-bg: rgba(255, 255, 255, 0.65);
-  --card-border: rgba(255, 255, 255, 0.35);
-  --text: #1a1a2e;
-  --text-secondary: #6b7280;
-  --shadow: rgba(0, 0, 0, 0.06);
-  --shadow-hover: rgba(0, 0, 0, 0.12);
-  --glass-blur: 16px;
-  --accent: #6c63ff;
-  --accent-light: rgba(108, 99, 255, 0.12);
-  --tag-bg: rgba(255, 255, 255, 0.5);
-  --tag-active-bg: #6c63ff;
-  --tag-active-text: #fff;
-  --input-bg: rgba(255, 255, 255, 0.7);
-  --modal-bg: rgba(0, 0, 0, 0.3);
-  --card-radius: 16px;
-}
-
-[data-theme="dark"] {
-  --bg: #0f0f1a;
-  --card-bg: rgba(25, 25, 45, 0.7);
-  --card-border: rgba(255, 255, 255, 0.06);
-  --text: #e4e4ed;
-  --text-secondary: #8888a0;
-  --shadow: rgba(0, 0, 0, 0.25);
-  --shadow-hover: rgba(0, 0, 0, 0.4);
-  --accent-light: rgba(108, 99, 255, 0.18);
-  --tag-bg: rgba(255, 255, 255, 0.05);
-  --input-bg: rgba(255, 255, 255, 0.06);
-  --modal-bg: rgba(0, 0, 0, 0.6);
 }
 
 body {

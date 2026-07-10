@@ -1,4 +1,4 @@
-const presetTools = [
+const fallbackTools = [
   { id: 'gh', name: 'GitHub', url: 'https://github.com', category: 'dev', icon: '🐙', color: '#24292e' },
   { id: 'so', name: 'Stack Overflow', url: 'https://stackoverflow.com', category: 'dev', icon: '📚', color: '#f48024' },
   { id: 'mdn', name: 'MDN Web Docs', url: 'https://developer.mozilla.org', category: 'dev', icon: '📖', color: '#000000' },
@@ -14,16 +14,24 @@ const presetTools = [
   { id: 'copilot', name: 'GitHub Copilot', url: 'https://github.com/features/copilot', category: 'ai', icon: '👨‍💻', color: '#58a6ff' },
   { id: 'perplexity', name: 'Perplexity', url: 'https://www.perplexity.ai', category: 'ai', icon: '🔍', color: '#1a1a2e' },
   { id: 'poe', name: 'Poe', url: 'https://poe.com', category: 'ai', icon: '💬', color: '#6c63ff' },
+  { id: 'nav-dashboard', name: '仪表盘', url: 'dashboard/', category: 'nav', icon: '📊', color: '#6c63ff' },
+  { id: 'nav-tools', name: '工具集', url: 'tools/', category: 'nav', icon: '🔧', color: '#6c63ff' },
+  { id: 'nav-apps', name: '应用中心', url: 'apps/', category: 'nav', icon: '📱', color: '#6c63ff' },
+  { id: 'nav-aunt-house', name: 'AuntHouse 图纸助手', url: 'apps/aunt-house/', category: 'nav', icon: '🏗️', color: '#6c63ff' },
+  { id: 'nav-docs', name: '文档', url: 'docs/', category: 'nav', icon: '📄', color: '#6c63ff' },
 ];
 
 const categories = [
   { id: 'all', label: '全部' },
+  { id: 'nav', label: '🗂️ 导航' },
   { id: 'dev', label: '💻 开发工具' },
   { id: 'ai', label: '🤖 AI 工具' },
 ];
 
+let presetTools = [];
 let currentCategory = 'all';
 let searchTerm = '';
+let isLoading = true;
 
 function getCustomTools() {
   try {
@@ -54,6 +62,12 @@ function renderTabs() {
 
 function renderCards() {
   const grid = document.getElementById('grid');
+
+  if (isLoading) {
+    grid.innerHTML = '<div class="empty" id="loadingIndicator">⏳ 加载中...</div>';
+    return;
+  }
+
   const customTools = getCustomTools();
   const allTools = [...presetTools, ...customTools];
 
@@ -72,14 +86,34 @@ function renderCards() {
 
   grid.innerHTML = filtered.map(t => {
     const isCustom = customIds.has(t.id);
+    const isExternal = /^https?:\/\//.test(t.url);
+    const linkAttr = isExternal ? ' target="_blank" rel="noopener noreferrer"' : '';
     return `
-      <a href="${t.url}" class="card" target="_blank" rel="noopener noreferrer" style="--card-color: ${t.color}">
+      <a href="${t.url}" class="card"${linkAttr} style="--card-color: ${t.color}">
         <span class="card-icon">${t.icon}</span>
         <span class="card-name">${t.name}</span>
         ${isCustom ? `<button class="card-del" data-id="${t.id}" title="删除">×</button>` : ''}
       </a>
     `;
   }).join('');
+}
+
+async function loadPresetTools() {
+  if (location.protocol === 'file:') {
+    presetTools = fallbackTools;
+    isLoading = false;
+    renderCards();
+    return;
+  }
+  try {
+    const res = await fetch('assets/data/tools.json');
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    presetTools = await res.json();
+  } catch {
+    presetTools = fallbackTools;
+  }
+  isLoading = false;
+  renderCards();
 }
 
 function init() {
@@ -89,6 +123,8 @@ function init() {
 
   renderTabs();
   renderCards();
+
+  loadPresetTools();
 
   document.getElementById('themeToggle').addEventListener('click', () => {
     const current = document.documentElement.getAttribute('data-theme');
