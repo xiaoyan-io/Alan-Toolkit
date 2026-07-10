@@ -18,5 +18,6 @@
   { "id": "nav-tools", "name": "工具集", "url": "tools/", "category": "nav", "icon": "🔧", "color": "#6c63ff" },
   { "id": "nav-apps", "name": "应用中心", "url": "apps/", "category": "nav", "icon": "📱", "color": "#6c63ff" },
   { "id": "nav-aunt-house", "name": "AuntHouse 图纸助手", "url": "apps/aunt-house/", "category": "nav", "icon": "🏗️", "color": "#6c63ff" },
+  { "id": "nav-prompt-workflow-notes", "name": "AI 指令流程笔记", "url": "apps/prompt-workflow-notes/", "category": "nav", "icon": "📝", "color": "#6c63ff" },
   { "id": "nav-docs", "name": "文档", "url": "docs/", "category": "nav", "icon": "📄", "color": "#6c63ff" }
 ]

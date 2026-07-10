@@ -25,6 +25,40 @@ python3 -m http.server 8080
 node scripts/sync-tools-fallback.js
 ```
 
+## KSWEB 部署
+
+通过 KSWEB（Lighttpd）在 Android 手机上提供 HTTP 服务。
+
+| 项目 | 路径 |
+|------|------|
+| 开发目录 | `/storage/emulated/0/Code/Alan-Toolkit` |
+| 部署目录 | `/storage/emulated/0/htdocs/Alan-Toolkit` |
+| 部署命令 | `bash scripts/deploy-ksweb.sh` |
+| 检查命令 | `bash scripts/check-ksweb-deploy.sh` |
+
+### 本机访问
+
+```
+http://localhost:8080/Alan-Toolkit/
+http://localhost:8080/Alan-Toolkit/apps/prompt-workflow-notes/
+http://localhost:8080/Alan-Toolkit/apps/aunt-house/
+```
+
+### 局域网访问
+
+```
+http://192.168.x.x:8080/Alan-Toolkit/
+```
+
+将 `192.168.x.x` 替换为设备的实际局域网 IP。
+
+### 注意事项
+
+- KSWEB Lighttpd 必须保持运行状态
+- 修改项目文件后需要重新执行 `bash scripts/deploy-ksweb.sh`
+- 部署脚本仅同步文件到部署目录，不会删除开发目录中的任何文件
+- 部署目录中已不存在于源项目的文件会被自动清理（`--delete`）
+
 ## 目录
 
 | 目录 | 用途 |
