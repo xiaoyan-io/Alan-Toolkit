@@ -61,9 +61,100 @@
       </div>
     </section>
 
+    <!-- ── 墙体验证摘要 ── -->
+    <section id="wall-summary" class="card-section" style="display:none">
+      <h2>📊 墙体验证摘要</h2>
+      <div id="summary-grid">
+        <div class="stat-card">
+          <span class="stat-value" id="stat-total">0</span>
+          <span class="stat-label">墙体总数</span>
+        </div>
+        <div class="stat-card stat-valid">
+          <span class="stat-value" id="stat-valid">0</span>
+          <span class="stat-label">有效墙体</span>
+        </div>
+        <div class="stat-card stat-invalid">
+          <span class="stat-value" id="stat-invalid">0</span>
+          <span class="stat-label">无效数据</span>
+        </div>
+        <div class="stat-card stat-duplicate">
+          <span class="stat-value" id="stat-duplicate">0</span>
+          <span class="stat-label">重复 Wall_ID</span>
+        </div>
+        <div class="stat-card stat-room">
+          <span class="stat-value" id="stat-rooms">0</span>
+          <span class="stat-label">检测房间</span>
+        </div>
+      </div>
+      <div id="summary-details"></div>
+      <button id="export-report-btn" class="action-btn">📥 导出验证报告</button>
+    </section>
+
+    <!-- ── 墙体数据表 ── -->
+    <section id="wall-table-section" class="card-section" style="display:none">
+      <h2>📋 墙体数据</h2>
+      <div id="wall-table-controls">
+        <input id="wall-search" type="text" placeholder="搜索 Wall_ID…" />
+        <select id="wall-status-filter">
+          <option value="all">全部</option>
+          <option value="valid">有效</option>
+          <option value="invalid">无效</option>
+        </select>
+        <select id="wall-page-size">
+          <option value="50">50 条/页</option>
+          <option value="100">100 条/页</option>
+          <option value="200">200 条/页</option>
+        </select>
+        <span id="wall-count-display"></span>
+      </div>
+      <div id="wall-table-wrap">
+        <table id="wall-table">
+          <thead>
+            <tr>
+              <th>Wall_ID</th>
+              <th>起点 (X,Y)</th>
+              <th>终点 (X,Y)</th>
+              <th>厚度</th>
+              <th>高度</th>
+              <th>房间/区域</th>
+              <th>状态</th>
+            </tr>
+          </thead>
+          <tbody id="wall-tbody"></tbody>
+        </table>
+        <div id="wall-empty" class="empty-state">暂无匹配的墙体数据</div>
+      </div>
+      <div id="wall-pagination">
+        <button id="page-prev" disabled>‹ 上一页</button>
+        <span id="page-info"></span>
+        <button id="page-next" disabled>下一页 ›</button>
+      </div>
+    </section>
+
+    <!-- ── 房间拓扑 ── -->
+    <section id="room-section" class="card-section" style="display:none">
+      <h2>🏠 房间拓扑</h2>
+      <div id="room-toolbar">
+        <span id="room-count-label"></span>
+        <label id="diag-toggle-label" class="diag-toggle" style="display:none">
+          <input type="checkbox" id="diag-toggle" checked>
+          <span>拓扑诊断</span>
+        </label>
+      </div>
+      <div id="room-grid"></div>
+      <div id="topology-diagnostics" style="display:none"></div>
+    </section>
+
     <div class="row row-bottom">
       <section id="preview-area" class="card-section">
         <h2>👁️ 预览</h2>
+        <!-- 墙体 CSV 视图切换（JS 动态显示） -->
+        <div id="wall-view-tabs" style="display:none">
+          <button class="wall-tab active" data-view="raw">原始表格</button>
+          <button class="wall-tab" data-view="list">墙体列表</button>
+          <button class="wall-tab" data-view="svg">SVG 画布</button>
+          <button class="wall-tab" data-view="room">房间拓扑</button>
+        </div>
         <div id="preview-content">
           <p class="empty-state">选择一个文件查看预览</p>
         </div>
@@ -98,6 +189,15 @@
       </section>
     </div>
   </main>
+
+  <!-- ── 墙体详情抽屉 ── -->
+  <div id="wall-detail-panel" class="detail-panel" style="display:none">
+    <div class="detail-header">
+      <h3>墙体详情</h3>
+      <button id="detail-close">✕</button>
+    </div>
+    <div id="detail-content"></div>
+  </div>
 
   <script src="script.js"></script>
 </body>
