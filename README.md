@@ -39,18 +39,31 @@ node scripts/sync-tools-fallback.js
 ### 本机访问
 
 ```
-http://localhost:8080/Alan-Toolkit/
-http://localhost:8080/Alan-Toolkit/apps/prompt-workflow-notes/
-http://localhost:8080/Alan-Toolkit/apps/aunt-house/
+http://localhost:8888/Alan-Toolkit/
+http://localhost:8888/Alan-Toolkit/apps/prompt-workflow-notes/
+http://localhost:8888/Alan-Toolkit/apps/aunt-house/
+http://localhost:8888/Alan-Toolkit/apps/json-toolbox/
+http://localhost:8888/Alan-Toolkit/apps/project-hub/
 ```
 
 ### 局域网访问
 
 ```
-http://192.168.x.x:8080/Alan-Toolkit/
+http://192.168.x.x:8888/Alan-Toolkit/
 ```
 
 将 `192.168.x.x` 替换为设备的实际局域网 IP。
+
+### 离线提示词库
+
+导航页「📚 提示词库」指向 KSWeb 根目录下的独立 PHP 应用 `/prompts-lib/`（数据内置，完全离线，支持中英文搜索与「仅开发向」过滤）：
+
+```
+http://localhost:8888/prompts-lib/
+```
+
+- 数据源：`awesome-chatgpt-prompts/prompts.csv`（6458 条）
+- 独立维护，不属于本仓库源码（部署目录 `/htdocs/prompts-lib/`）
 
 ### 注意事项
 

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JSON 工具箱 - Alan-Toolkit</title>
+  <link rel="stylesheet" href="../../style.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <h1>🔧 JSON 工具箱</h1>
+      <button id="themeToggle" aria-label="切换主题">🌙</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- Tabs -->
+    <div id="tabBar" class="tab-bar"></div>
+
+    <!-- Two-panel layout: input (left/top), output (right/bottom) -->
+    <div id="appLayout" class="app-layout">
+      <!-- Input Panel -->
+      <div class="panel panel-input">
+        <div class="panel-header">
+          <span class="panel-title" id="inputTitle">输入</span>
+          <div class="panel-actions">
+            <button id="clearBtn" class="panel-btn" title="清空">✕</button>
+            <button id="pasteBtn" class="panel-btn" title="粘贴">📋</button>
+          </div>
+        </div>
+        <textarea id="inputArea" class="code-input" placeholder='粘贴 JSON 到这里…' spellcheck="false" wrap="off"></textarea>
+        <!-- Second input for Compare tab -->
+        <textarea id="inputArea2" class="code-input" style="display:none" placeholder='粘贴第二个 JSON…' spellcheck="false" wrap="off"></textarea>
+      </div>
+
+      <!-- Action Bar -->
+      <div id="actionBar" class="action-bar">
+        <div class="action-left">
+          <button id="runBtn" class="action-btn primary">▶ 执行</button>
+          <span id="indentGroup" class="indent-group">
+            <label class="indent-label">缩进</label>
+            <select id="indentSelect" class="indent-select">
+              <option value="2">2 空格</option>
+              <option value="4">4 空格</option>
+              <option value="tab">Tab</option>
+            </select>
+          </span>
+        </div>
+        <span id="charCount" class="char-count">0 字符</span>
+      </div>
+
+      <!-- Output Panel -->
+      <div class="panel panel-output">
+        <div class="panel-header">
+          <span class="panel-title" id="outputTitle">输出</span>
+          <div class="panel-actions">
+            <span id="statusBadge" class="status-badge"></span>
+            <button id="copyBtn" class="panel-btn" title="复制">📄</button>
+          </div>
+        </div>
+        <div id="outputArea" class="code-output"></div>
+      </div>
+    </div>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>

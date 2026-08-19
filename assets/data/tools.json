@@ -1,23 +1,202 @@
 [
-  { "id": "gh", "name": "GitHub", "url": "https://github.com", "category": "dev", "icon": "🐙", "color": "#24292e" },
-  { "id": "so", "name": "Stack Overflow", "url": "https://stackoverflow.com", "category": "dev", "icon": "📚", "color": "#f48024" },
-  { "id": "mdn", "name": "MDN Web Docs", "url": "https://developer.mozilla.org", "category": "dev", "icon": "📖", "color": "#000000" },
-  { "id": "npm", "name": "npm", "url": "https://www.npmjs.com", "category": "dev", "icon": "📦", "color": "#cb3837" },
-  { "id": "vsc", "name": "VSCode", "url": "https://code.visualstudio.com", "category": "dev", "icon": "💻", "color": "#007acc" },
-  { "id": "devtools", "name": "DevTools", "url": "https://developer.chrome.com/docs/devtools", "category": "dev", "icon": "🛠️", "color": "#4285f4" },
-  { "id": "cp", "name": "CodePen", "url": "https://codepen.io", "category": "dev", "icon": "✏️", "color": "#1e1f26" },
-  { "id": "vite", "name": "Vite", "url": "https://vitejs.dev", "category": "dev", "icon": "⚡", "color": "#646cff" },
-  { "id": "wp", "name": "Webpack", "url": "https://webpack.js.org", "category": "dev", "icon": "🧩", "color": "#8dd6f9" },
-  { "id": "chatgpt", "name": "ChatGPT", "url": "https://chat.openai.com", "category": "ai", "icon": "🤖", "color": "#10a37f" },
-  { "id": "claude", "name": "Claude", "url": "https://claude.ai", "category": "ai", "icon": "🧠", "color": "#6b4fa0" },
-  { "id": "gemini", "name": "Gemini", "url": "https://gemini.google.com", "category": "ai", "icon": "✨", "color": "#4285f4" },
-  { "id": "copilot", "name": "GitHub Copilot", "url": "https://github.com/features/copilot", "category": "ai", "icon": "👨‍💻", "color": "#58a6ff" },
-  { "id": "perplexity", "name": "Perplexity", "url": "https://www.perplexity.ai", "category": "ai", "icon": "🔍", "color": "#1a1a2e" },
-  { "id": "poe", "name": "Poe", "url": "https://poe.com", "category": "ai", "icon": "💬", "color": "#6c63ff" },
-  { "id": "nav-dashboard", "name": "仪表盘", "url": "dashboard/", "category": "nav", "icon": "📊", "color": "#6c63ff" },
-  { "id": "nav-tools", "name": "工具集", "url": "tools/", "category": "nav", "icon": "🔧", "color": "#6c63ff" },
-  { "id": "nav-apps", "name": "应用中心", "url": "apps/", "category": "nav", "icon": "📱", "color": "#6c63ff" },
-  { "id": "nav-aunt-house", "name": "AuntHouse 图纸助手", "url": "apps/aunt-house/", "category": "nav", "icon": "🏗️", "color": "#6c63ff" },
-  { "id": "nav-prompt-workflow-notes", "name": "AI 指令流程笔记", "url": "apps/prompt-workflow-notes/", "category": "nav", "icon": "📝", "color": "#6c63ff" },
-  { "id": "nav-docs", "name": "文档", "url": "docs/", "category": "nav", "icon": "📄", "color": "#6c63ff" }
+  {
+    "id": "gh",
+    "name": "GitHub",
+    "url": "https://github.com",
+    "category": "dev",
+    "icon": "🐙",
+    "color": "#24292e"
+  },
+  {
+    "id": "so",
+    "name": "Stack Overflow",
+    "url": "https://stackoverflow.com",
+    "category": "dev",
+    "icon": "📚",
+    "color": "#f48024"
+  },
+  {
+    "id": "mdn",
+    "name": "MDN Web Docs",
+    "url": "https://developer.mozilla.org",
+    "category": "dev",
+    "icon": "📖",
+    "color": "#000000"
+  },
+  {
+    "id": "npm",
+    "name": "npm",
+    "url": "https://www.npmjs.com",
+    "category": "dev",
+    "icon": "📦",
+    "color": "#cb3837"
+  },
+  {
+    "id": "vsc",
+    "name": "VSCode",
+    "url": "https://code.visualstudio.com",
+    "category": "dev",
+    "icon": "💻",
+    "color": "#007acc"
+  },
+  {
+    "id": "devtools",
+    "name": "DevTools",
+    "url": "https://developer.chrome.com/docs/devtools",
+    "category": "dev",
+    "icon": "🛠️",
+    "color": "#4285f4"
+  },
+  {
+    "id": "cp",
+    "name": "CodePen",
+    "url": "https://codepen.io",
+    "category": "dev",
+    "icon": "✏️",
+    "color": "#1e1f26"
+  },
+  {
+    "id": "vite",
+    "name": "Vite",
+    "url": "https://vitejs.dev",
+    "category": "dev",
+    "icon": "⚡",
+    "color": "#646cff"
+  },
+  {
+    "id": "wp",
+    "name": "Webpack",
+    "url": "https://webpack.js.org",
+    "category": "dev",
+    "icon": "🧩",
+    "color": "#8dd6f9"
+  },
+  {
+    "id": "chatgpt",
+    "name": "ChatGPT",
+    "url": "https://chat.openai.com",
+    "category": "ai",
+    "icon": "🤖",
+    "color": "#10a37f"
+  },
+  {
+    "id": "claude",
+    "name": "Claude",
+    "url": "https://claude.ai",
+    "category": "ai",
+    "icon": "🧠",
+    "color": "#6b4fa0"
+  },
+  {
+    "id": "gemini",
+    "name": "Gemini",
+    "url": "https://gemini.google.com",
+    "category": "ai",
+    "icon": "✨",
+    "color": "#4285f4"
+  },
+  {
+    "id": "copilot",
+    "name": "GitHub Copilot",
+    "url": "https://github.com/features/copilot",
+    "category": "ai",
+    "icon": "👨‍💻",
+    "color": "#58a6ff"
+  },
+  {
+    "id": "perplexity",
+    "name": "Perplexity",
+    "url": "https://www.perplexity.ai",
+    "category": "ai",
+    "icon": "🔍",
+    "color": "#1a1a2e"
+  },
+  {
+    "id": "poe",
+    "name": "Poe",
+    "url": "https://poe.com",
+    "category": "ai",
+    "icon": "💬",
+    "color": "#6c63ff"
+  },
+  {
+    "id": "nav-dashboard",
+    "name": "仪表盘",
+    "url": "dashboard/",
+    "category": "nav",
+    "icon": "📊",
+    "color": "#6c63ff"
+  },
+  {
+    "id": "nav-tools",
+    "name": "工具集",
+    "url": "tools/",
+    "category": "nav",
+    "icon": "🔧",
+    "color": "#6c63ff"
+  },
+  {
+    "id": "nav-apps",
+    "name": "应用中心",
+    "url": "apps/",
+    "category": "nav",
+    "icon": "📱",
+    "color": "#6c63ff"
+  },
+  {
+    "id": "nav-aunt-house",
+    "name": "AuntHouse 图纸助手",
+    "url": "apps/aunt-house/",
+    "category": "nav",
+    "icon": "🏗️",
+    "color": "#6c63ff"
+  },
+  {
+    "id": "nav-prompt-workflow-notes",
+    "name": "AI 指令流程笔记",
+    "url": "apps/prompt-workflow-notes/",
+    "category": "nav",
+    "icon": "📝",
+    "color": "#6c63ff"
+  },
+  {
+    "id": "nav-project-hub",
+    "name": "Project Hub",
+    "url": "apps/project-hub/",
+    "category": "nav",
+    "icon": "📦",
+    "color": "#6c63ff"
+  },
+  {
+    "id": "nav-json-toolbox",
+    "name": "JSON 工具箱",
+    "url": "apps/json-toolbox/",
+    "category": "nav",
+    "icon": "🔧",
+    "color": "#6c63ff"
+  },
+  {
+    "id": "iptv-diynets",
+    "name": "DIYnets IPTV",
+    "url": "https://iptv.diynets.xyz",
+    "category": "selfhost",
+    "icon": "📺",
+    "color": "#e53935"
+  },
+  {
+    "id": "nav-docs",
+    "name": "文档",
+    "url": "docs/",
+    "category": "nav",
+    "icon": "📄",
+    "color": "#6c63ff"
+  },
+  {
+    "id": "nav-prompts-lib",
+    "name": "提示词库",
+    "url": "/prompts-lib/",
+    "category": "nav",
+    "icon": "📚",
+    "color": "#10a37f"
+  }
 ]

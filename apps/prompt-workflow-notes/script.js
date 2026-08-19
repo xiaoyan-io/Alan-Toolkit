@@ -16,6 +16,8 @@ const state = {
   editNoteId: null,
   tagPanelOpen: false,
   moreMenuOpen: false,
+  selectionMode: false,
+  selectedIds: {},
 };
 
 const LS_KEYS = {
@@ -223,6 +225,13 @@ function isPreset(id) { return id.indexOf('preset_') === 0; }
 
 function nowISO() { return new Date().toISOString(); }
 
+function highlightText(text, query) {
+  if (!query || !text) return esc(text);
+  var escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  var re = new RegExp('(' + escaped + ')', 'gi');
+  return esc(text).replace(re, '<mark class="search-hl">$1</mark>');
+}
+
 /* ════════════════════════════════════════
    Data Layer
    ════════════════════════════════════════ */
@@ -420,7 +429,7 @@ function renderNotes() {
     var tagHtml = '';
     if (n.tags && Array.isArray(n.tags)) {
       tagHtml = n.tags.slice(0, 4).map(function (t) {
-        return '<span class="note-card-tag">' + esc(t) + '</span>';
+        return '<span class="note-card-tag">' + highlightText(t, state.searchQuery) + '</span>';
       }).join('');
       if (n.tags.length > 4) tagHtml += '<span class="note-card-tag">+' + (n.tags.length - 4) + '</span>';
     }
@@ -431,13 +440,15 @@ function renderNotes() {
       timeStr = d.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
     }
 
-    return '<div class="note-card" data-id="' + esc(n.id) + '">' +
+    var selHtml = state.selectionMode ? '<div class="note-card-select"><input type="checkbox" class="note-select-cb" data-id="' + esc(n.id) + '" ' + (state.selectedIds[n.id] ? 'checked' : '') + '></div>' : '';
+
+    return selHtml + '<div class="note-card' + (state.selectedIds[n.id] ? ' selected' : '') + '" data-id="' + esc(n.id) + '">' +
       '<div class="note-card-header">' +
-        '<div class="note-card-title">' + esc(n.title) + '</div>' +
+        '<div class="note-card-title">' + highlightText(n.title, state.searchQuery) + '</div>' +
         '<span class="note-card-fav">' + favStar + '</span>' +
       '</div>' +
       '<span class="note-card-cat">' + esc(cat.icon + ' ' + cat.label) + '</span>' +
-      '<div class="note-card-summary">' + esc(n.summary || '') + '</div>' +
+      '<div class="note-card-summary">' + highlightText(n.summary || '', state.searchQuery) + '</div>' +
       (tagHtml ? '<div class="note-card-tags">' + tagHtml + '</div>' : '') +
       '<div class="note-card-meta">' +
         '<span>' + timeStr + '</span>' +
@@ -669,6 +680,7 @@ function openModal(noteId) {
   }
 
   document.getElementById('formError').style.display = 'none';
+  updateSizeIndicator();
   modal.style.display = '';
   document.body.style.overflow = 'hidden';
 }
@@ -775,13 +787,52 @@ async function deleteNote() {
 /* ════════════════════════════════════════
    Import / Export
    ════════════════════════════════════════ */
-function exportUserData() {
-  var localData = loadLocalData();
+function showExportDialog() {
+  var overlay = document.getElementById('exportOverlay');
+  document.getElementById('exportScopeCategory').textContent = '当前分类: ' + (CATEGORY_MAP[state.activeCategory] ? CATEGORY_MAP[state.activeCategory].label : '全部');
+  var selCount = Object.keys(state.selectedIds).length;
+  document.getElementById('exportScopeSelected').textContent = '已选笔记 (' + selCount + ')';
+  document.getElementById('exportScopeSelected').closest('.export-option').style.display = selCount > 0 ? '' : 'none';
+  overlay.style.display = '';
+  document.body.style.overflow = 'hidden';
+}
+
+function closeExportDialog() {
+  document.getElementById('exportOverlay').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+function doExport() {
+  var scope = document.querySelector('input[name="exportScope"]:checked').value;
+  closeExportDialog();
+
+  var notes;
+  if (scope === 'all') {
+    notes = state.notes;
+  } else if (scope === 'category') {
+    notes = state.activeCategory !== 'all'
+      ? state.notes.filter(function (n) { return n.category === state.activeCategory; })
+      : state.notes;
+  } else if (scope === 'selected') {
+    var sel = state.selectedIds;
+    notes = state.notes.filter(function (n) { return sel[n.id]; });
+  }
+
   var exportObj = {
     exportedAt: nowISO(),
-    userNotes: localData.userNotes,
-    favorites: localData.favorites,
-    lastUsed: localData.lastUsed,
+    userNotes: notes.map(function (n) {
+      return { id: n.id, title: n.title, category: n.category, tags: n.tags, summary: n.summary, prompt: n.prompt, steps: n.steps, notes: n.notes, favorite: n.favorite, createdAt: n.createdAt, updatedAt: n.updatedAt };
+    }),
+    favorites: (function () {
+      var f = {};
+      notes.forEach(function (n) { if (n.favorite) f[n.id] = true; });
+      return f;
+    })(),
+    lastUsed: (function () {
+      var lu = {};
+      notes.forEach(function (n) { if (n.lastUsed) lu[n.id] = n.lastUsed; });
+      return lu;
+    })(),
   };
 
   var json = JSON.stringify(exportObj, null, 2);
@@ -792,7 +843,7 @@ function exportUserData() {
   a.download = 'prompt-notes-backup-' + new Date().toISOString().slice(0, 10) + '.json';
   a.click();
   URL.revokeObjectURL(url);
-  toast('📤 数据已导出');
+  toast('📤 已导出 ' + notes.length + ' 条笔记');
 }
 
 function importUserData(file) {
@@ -809,33 +860,207 @@ function importUserData(file) {
       var existingIds = {};
       localData.userNotes.forEach(function (n) { existingIds[n.id] = true; });
 
-      var imported = 0;
-      data.userNotes.forEach(function (n) {
-        if (!n.id) {
-          n.id = 'user_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6);
-        }
-        if (!existingIds[n.id]) {
-          localData.userNotes.push(n);
-          existingIds[n.id] = true;
-          imported++;
-        }
-      });
+      var conflicts = data.userNotes.filter(function (n) { return n.id && existingIds[n.id]; });
 
-      if (data.favorites) {
-        Object.keys(data.favorites).forEach(function (id) {
-          localData.favorites[id] = data.favorites[id];
+      function doImport(mode) {
+        var imported = 0;
+        data.userNotes.forEach(function (n) {
+          if (!n.id) {
+            n.id = 'user_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6);
+          }
+          if (existingIds[n.id]) {
+            if (mode === 'overwrite') {
+              var idx = localData.userNotes.findIndex(function (x) { return x.id === n.id; });
+              if (idx !== -1) localData.userNotes[idx] = n;
+              imported++;
+            }
+          } else {
+            localData.userNotes.push(n);
+            existingIds[n.id] = true;
+            imported++;
+          }
         });
-        saveFavorites(localData.favorites);
+
+        if (data.favorites) {
+          Object.keys(data.favorites).forEach(function (id) {
+            localData.favorites[id] = data.favorites[id];
+          });
+          saveFavorites(localData.favorites);
+        }
+
+        saveUserNotes(localData.userNotes);
+        toast('📥 已导入 ' + imported + ' 条笔记');
+        loadNotes();
       }
 
-      saveUserNotes(localData.userNotes);
-      toast('📥 已导入 ' + imported + ' 条笔记');
-      loadNotes();
+      if (conflicts.length > 0) {
+        showImportConflictDialog(conflicts.length, doImport);
+      } else {
+        doImport('skip');
+      }
     } catch (err) {
       toast('⚠️ 导入失败: ' + err.message);
     }
   };
   reader.readAsText(file);
+}
+
+function showImportConflictDialog(count, callback) {
+  var overlay = document.getElementById('confirmOverlay');
+  var msg = document.getElementById('confirmMessage');
+  msg.innerHTML = count + ' 条笔记已存在。<br>如何处理？';
+  overlay.style.display = '';
+
+  var yes = document.getElementById('confirmYes');
+  var no = document.getElementById('confirmNo');
+  var alt = document.getElementById('confirmAlt') || (function () {
+    var btn = document.createElement('button');
+    btn.id = 'confirmAlt';
+    btn.className = 'btn-secondary';
+    btn.textContent = '取消导入';
+    document.querySelector('#confirmOverlay .modal-actions').appendChild(btn);
+    return btn;
+  })();
+
+  alt.style.display = '';
+  yes.textContent = '覆盖';
+  no.textContent = '跳过';
+
+  function cleanup() {
+    overlay.style.display = 'none';
+    yes.removeEventListener('click', onOverwrite);
+    no.removeEventListener('click', onSkip);
+    alt.removeEventListener('click', onCancel);
+    alt.style.display = 'none';
+    yes.textContent = '确认';
+    no.textContent = '取消';
+  }
+
+  function onOverwrite() { cleanup(); callback('overwrite'); }
+  function onSkip() { cleanup(); callback('skip'); }
+  function onCancel() { cleanup(); callback('cancel'); }
+
+  yes.addEventListener('click', onOverwrite);
+  no.addEventListener('click', onSkip);
+  alt.addEventListener('click', onCancel);
+}
+
+/* ════════════════════════════════════════
+   Selection / Batch
+   ════════════════════════════════════════ */
+function toggleSelectionMode() {
+  state.selectionMode = !state.selectionMode;
+  if (!state.selectionMode) state.selectedIds = {};
+  document.getElementById('selectToggle').classList.toggle('active', state.selectionMode);
+  document.getElementById('batchBar').style.display = state.selectionMode ? '' : 'none';
+  renderNotes();
+}
+
+function toggleNoteSelection(id) {
+  if (state.selectedIds[id]) { delete state.selectedIds[id]; }
+  else { state.selectedIds[id] = true; }
+  renderNotes();
+  renderBatchBar();
+}
+
+function clearSelection() {
+  state.selectedIds = {};
+  renderNotes();
+  renderBatchBar();
+}
+
+function renderBatchBar() {
+  var bar = document.getElementById('batchBar');
+  if (!state.selectionMode) { bar.style.display = 'none'; return; }
+  var count = Object.keys(state.selectedIds).length;
+  document.getElementById('batchCount').textContent = '已选 ' + count + ' 条';
+  bar.style.display = '';
+}
+
+async function batchDeleteSelected() {
+  var ids = Object.keys(state.selectedIds);
+  if (ids.length === 0) { toast('请先选择笔记'); return; }
+  var ok = await confirmDialog('确定删除选中的 ' + ids.length + ' 条笔记？');
+  if (!ok) return;
+  var localData = loadLocalData();
+  localData.userNotes = localData.userNotes.filter(function (n) { return ids.indexOf(n.id) === -1; });
+  saveUserNotes(localData.userNotes);
+  state.selectedIds = {};
+  toast('🗑️ 已删除 ' + ids.length + ' 条笔记');
+  loadNotes();
+}
+
+async function batchMoveSelected() {
+  var ids = Object.keys(state.selectedIds);
+  if (ids.length === 0) { toast('请先选择笔记'); return; }
+  var html = CATEGORIES.map(function (c) {
+    return '<label class="export-option"><input type="radio" name="moveCategory" value="' + esc(c.id) + '"> ' + c.icon + ' ' + c.label + '</label>';
+  }).join('');
+  var overlay = document.getElementById('confirmOverlay');
+  document.getElementById('confirmMessage').innerHTML = '移动到分类：<br>' + html;
+  overlay.style.display = '';
+  var yes = document.getElementById('confirmYes');
+  var no = document.getElementById('confirmNo');
+  yes.textContent = '移动';
+  no.textContent = '取消';
+  function cleanup() {
+    overlay.style.display = 'none';
+    yes.removeEventListener('click', onMove);
+    no.removeEventListener('click', onCancel);
+    yes.textContent = '确认';
+    no.textContent = '取消';
+    var radios = document.querySelectorAll('input[name="moveCategory"]');
+    if (radios.length > 0) radios[0].checked = true;
+  }
+  function onMove() {
+    var selected = document.querySelector('input[name="moveCategory"]:checked');
+    if (!selected) { toast('请选择分类'); return; }
+    var cat = selected.value;
+    cleanup();
+    var localData = loadLocalData();
+    var moved = 0;
+    localData.userNotes.forEach(function (n) {
+      if (ids.indexOf(n.id) !== -1) { n.category = cat; n.updatedAt = nowISO(); moved++; }
+    });
+    saveUserNotes(localData.userNotes);
+    state.selectedIds = {};
+    toast('📂 已移动 ' + moved + ' 条笔记');
+    loadNotes();
+  }
+  function onCancel() { cleanup(); }
+  yes.addEventListener('click', onMove);
+  no.addEventListener('click', onCancel);
+}
+
+function getOpenOverlay() {
+  if (document.getElementById('detailOverlay').style.display !== 'none') return 'detail';
+  if (document.getElementById('noteModal').style.display !== 'none') return 'modal';
+  if (document.getElementById('confirmOverlay').style.display !== 'none') return 'confirm';
+  if (document.getElementById('exportOverlay').style.display !== 'none') return 'export';
+  return null;
+}
+
+/* ════════════════════════════════════════
+   Size Indicator
+   ════════════════════════════════════════ */
+function updateSizeIndicator() {
+  var title = document.getElementById('fieldTitle').value;
+  var category = document.getElementById('fieldCategory').value;
+  var tagsRaw = document.getElementById('fieldTags').value.trim();
+  var tags = tagsRaw ? tagsRaw.split(',').map(function (t) { return t.trim(); }).filter(Boolean) : [];
+  var summary = document.getElementById('fieldSummary').value.trim();
+  var prompt = document.getElementById('fieldPrompt').value;
+  var stepsRaw = document.getElementById('fieldSteps').value.trim();
+  var steps = stepsRaw ? stepsRaw.split('\n').map(function (s) { return s.trim(); }).filter(Boolean) : [];
+  var notes = document.getElementById('fieldNotes').value.trim();
+
+  var sizeEst = new Blob([title + category + JSON.stringify(tags) + summary + prompt + JSON.stringify(steps) + notes]).size;
+  var sizeKB = (sizeEst / 1024).toFixed(1);
+  var pct = Math.min(100, (sizeEst / 51200) * 100);
+
+  document.getElementById('sizeValue').textContent = sizeKB + ' KB';
+  document.getElementById('sizeBarFill').style.width = pct + '%';
+  document.getElementById('sizeBarFill').className = 'size-bar-fill' + (pct > 90 ? ' danger' : pct > 70 ? ' warn' : '');
 }
 
 /* ════════════════════════════════════════
@@ -926,10 +1151,15 @@ function init() {
 
   // Notes grid: click card
   document.getElementById('notesGrid').addEventListener('click', function (e) {
+    var cb = e.target.closest('.note-select-cb');
+    if (cb) { toggleNoteSelection(cb.dataset.id); return; }
+    if (state.selectionMode) {
+      var card = e.target.closest('.note-card');
+      if (card) toggleNoteSelection(card.dataset.id);
+      return;
+    }
     var card = e.target.closest('.note-card');
-    if (!card) return;
-    var id = card.dataset.id;
-    if (id) showDetail(id);
+    if (card && card.dataset.id) showDetail(card.dataset.id);
   });
 
   // Detail actions
@@ -968,7 +1198,7 @@ function init() {
   document.getElementById('exportDataBtn').addEventListener('click', function () {
     state.moreMenuOpen = false;
     document.getElementById('moreMenu').style.display = 'none';
-    exportUserData();
+    showExportDialog();
   });
   document.getElementById('importDataBtn').addEventListener('click', function () {
     state.moreMenuOpen = false;
@@ -979,14 +1209,35 @@ function init() {
     if (this.files.length > 0) { importUserData(this.files[0]); this.value = ''; }
   });
 
+  // Select / Batch
+  document.getElementById('selectToggle').addEventListener('click', toggleSelectionMode);
+  document.getElementById('batchMoveBtn').addEventListener('click', batchMoveSelected);
+  document.getElementById('batchDeleteBtn').addEventListener('click', batchDeleteSelected);
+  document.getElementById('batchClearBtn').addEventListener('click', clearSelection);
+
+  // Export dialog
+  document.getElementById('exportClose').addEventListener('click', closeExportDialog);
+  document.getElementById('exportCancel').addEventListener('click', closeExportDialog);
+  document.getElementById('exportOverlay').addEventListener('click', function (e) {
+    if (e.target === this) closeExportDialog();
+  });
+  document.getElementById('exportConfirm').addEventListener('click', doExport);
+
+  // Size indicator
+  var sizeFields = ['fieldTitle', 'fieldCategory', 'fieldTags', 'fieldSummary', 'fieldPrompt', 'fieldSteps', 'fieldNotes'];
+  sizeFields.forEach(function (id) {
+    var el = document.getElementById(id);
+    if (el) el.addEventListener('input', updateSizeIndicator);
+  });
+
   // Keyboard: Escape
   document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape') {
-      if (document.getElementById('detailOverlay').style.display !== 'none') closeDetail();
-      else if (document.getElementById('noteModal').style.display !== 'none') closeModal();
-      else if (document.getElementById('confirmOverlay').style.display !== 'none') {
-        document.getElementById('confirmOverlay').style.display = 'none';
-      }
+      var overlay = getOpenOverlay();
+      if (overlay === 'detail') closeDetail();
+      else if (overlay === 'modal') closeModal();
+      else if (overlay === 'confirm') document.getElementById('confirmOverlay').style.display = 'none';
+      else if (overlay === 'export') closeExportDialog();
     }
   });
 

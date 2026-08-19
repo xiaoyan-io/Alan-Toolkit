@@ -19,7 +19,11 @@ const fallbackTools = [
   { id: 'nav-apps', name: '应用中心', url: 'apps/', category: 'nav', icon: '📱', color: '#6c63ff' },
   { id: 'nav-aunt-house', name: 'AuntHouse 图纸助手', url: 'apps/aunt-house/', category: 'nav', icon: '🏗️', color: '#6c63ff' },
   { id: 'nav-prompt-workflow-notes', name: 'AI 指令流程笔记', url: 'apps/prompt-workflow-notes/', category: 'nav', icon: '📝', color: '#6c63ff' },
+  { id: 'nav-project-hub', name: 'Project Hub', url: 'apps/project-hub/', category: 'nav', icon: '📦', color: '#6c63ff' },
+  { id: 'nav-json-toolbox', name: 'JSON 工具箱', url: 'apps/json-toolbox/', category: 'nav', icon: '🔧', color: '#6c63ff' },
+  { id: 'iptv-diynets', name: 'DIYnets IPTV', url: 'https://iptv.diynets.xyz', category: 'selfhost', icon: '📺', color: '#e53935' },
   { id: 'nav-docs', name: '文档', url: 'docs/', category: 'nav', icon: '📄', color: '#6c63ff' },
+  { id: 'nav-prompts-lib', name: '提示词库', url: '/prompts-lib/', category: 'nav', icon: '📚', color: '#10a37f' },
 ];
 
 const categories = [
@@ -27,6 +31,7 @@ const categories = [
   { id: 'nav', label: '🗂️ 导航' },
   { id: 'dev', label: '💻 开发工具' },
   { id: 'ai', label: '🤖 AI 工具' },
+  { id: 'selfhost', label: '🏠 自托管' },
 ];
 
 let presetTools = [];
@@ -88,7 +93,8 @@ function renderCards() {
   grid.innerHTML = filtered.map(t => {
     const isCustom = customIds.has(t.id);
     const isExternal = /^https?:\/\//.test(t.url);
-    const linkAttr = isExternal ? ' target="_blank" rel="noopener noreferrer"' : '';
+    const isLocalHttps = isExternal && /^https:\/\/(10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|127\.|localhost)/.test(t.url);
+    const linkAttr = isExternal && !isLocalHttps ? ' target="_blank" rel="noopener noreferrer"' : '';
     return `
       <a href="${t.url}" class="card"${linkAttr} style="--card-color: ${t.color}">
         <span class="card-icon">${t.icon}</span>
