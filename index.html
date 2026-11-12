@@ -1,62 +1,207 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-theme="light">
+<html lang="zh-CN" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>我的工具导航</title>
+  <title>Alan Toolkit · 工具导航</title>
   <link rel="stylesheet" href="style.css">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧭</text></svg>">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⌘</text></svg>">
+  <style>
+    /* ── Alan Toolkit 首页：暗黑极客 (Japandi / Tech) 风格 ── */
+    :root{
+      --nav-accent: #8b5cf6;
+      --nav-accent-2: #f59e0b;
+      --nav-surface: rgba(255,255,255,0.04);
+      --nav-border: rgba(255,255,255,0.09);
+      --nav-text-muted: #94a3b8;
+    }
+    body{
+      background: var(--bg);
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+    }
+    /* 覆盖顶部，更偏科技感 */
+    header{
+      background: rgba(11,12,16,0.6);
+      backdrop-filter: blur(16px);
+      border-bottom-color: var(--nav-border);
+    }
+    .brand{
+      display:flex; align-items:center; gap:10px; font-weight:700; letter-spacing:-0.5px;
+    }
+    .brand .mark{
+      width:30px;height:30px;border-radius:8px;display:grid;place-items:center;
+      background:linear-gradient(135deg,var(--nav-accent),var(--nav-accent-2));
+      color:#fff;font-size:16px;box-shadow:0 0 14px rgba(139,92,246,0.45);
+    }
+    .hero{
+      max-width:1100px;margin:26px auto 10px;padding:0 20px;
+      text-align:center;
+    }
+    .hero h2{
+      font-size:30px;font-weight:800;letter-spacing:-0.5px;margin:0 0 6px;
+      background:linear-gradient(90deg,#e2e8f0,#94a3b8);
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+    }
+    .hero p{color:var(--nav-text-muted);font-size:14.5px;margin:0;}
+    .section{
+      max-width:1100px;margin:0 auto 26px;padding:0 20px;
+    }
+    .section-head{
+      display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;
+      gap:10px;
+    }
+    .section-head .label{
+      font-size:12px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;
+      color:var(--nav-accent);opacity:0.85;
+    }
+    .section-head .count{
+      font-size:12px;color:var(--nav-text-muted);padding:2px 8px;border:1px solid var(--nav-border);
+      border-radius:999px;background:var(--nav-surface);
+    }
+    /* 复用 style.css 的 .card / .grid，并增强科技感 */
+    .grid{grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:16px;}
+    .card{
+      background:var(--nav-surface);
+      border:1px solid var(--nav-border);
+      box-shadow:0 6px 24px var(--shadow);
+      group:relative;
+    }
+    .card:hover{
+      border-color:rgba(139,92,246,0.45);
+      box-shadow:0 10px 34px rgba(139,92,246,0.18);
+      transform:translateY(-6px);
+    }
+    .card-icon{
+      width:52px;height:52px;font-size:24px;border-radius:14px;
+      background:linear-gradient(135deg,rgba(255,255,255,0.06),rgba(255,255,255,0.02));
+      box-shadow:inset 0 0 0 1px rgba(255,255,255,0.12);
+    }
+    .card-name{font-size:15px;font-weight:700;letter-spacing:-0.2px;}
+    .card-desc{
+      font-size:12px;color:var(--nav-text-muted);margin-top:6px;line-height:1.45;
+      display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+    }
+    .card-arrow{
+      position:absolute;top:12px;right:12px;width:28px;height:28px;border-radius:50%;
+      background:rgba(255,255,255,0.06);border:1px solid var(--nav-border);
+      color:var(--nav-accent);font-size:13px;display:grid;place-items:center;
+      opacity:0;transition:opacity .2s,transform .2s;
+    }
+    .card:hover .card-arrow{opacity:1;transform:translateX(3px);}
+    /* 快速入口小卡片 */
+    .chip-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;}
+    .chip{
+      display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:12px;
+      background:var(--nav-surface);border:1px solid var(--nav-border);color:var(--text);
+      text-decoration:none;font-size:13px;font-weight:600;transition:.2s;
+    }
+    .chip:hover{background:rgba(255,255,255,0.07);border-color:var(--nav-accent);color:var(--nav-accent);}
+    .chip .k{font-size:18px;}
+    footer{
+      margin-top:auto;padding:24px 20px 34px;text-align:center;color:var(--nav-text-muted);font-size:12.5px;
+      border-top:1px solid var(--nav-border);
+    }
+    footer a{color:var(--nav-accent);text-decoration:none;}
+    @media (max-width:600px){
+      .hero h2{font-size:22px;}
+      .grid,.chip-grid{grid-template-columns:1fr;}
+    }
+  </style>
 </head>
 <body>
   <header>
-    <div class="header-inner">
-      <h1>🧭 我的工具导航</h1>
-      <button id="themeToggle" aria-label="切换主题">🌙</button>
+    <div class="header-inner" style="max-width:1100px;margin:0 auto;">
+      <div class="brand">
+        <div class="mark">⌘</div>
+        <div>Alan Toolkit</div>
+      </div>
+      <button id="themeToggle" aria-label="切换主题" style="margin-left:auto;">🌓</button>
     </div>
-    <div class="search-wrap">
-      <input type="text" id="searchInput" placeholder="搜索工具..." autocomplete="off">
+    <div class="search-wrap" style="max-width:1100px;margin:8px auto 0;">
+      <input type="text" id="searchInput" placeholder="搜索工具…" autocomplete="off">
     </div>
   </header>
 
-  <main>
-    <nav class="tabs" id="tabs"></nav>
-    <div class="grid" id="grid"></div>
+  <main style="flex:1;">
+    <div class="hero">
+      <h2>独立工具</h2>
+      <p>点击卡片打开对应工具 · 本地纯静态，支持 Cloudflare Pages 直接部署</p>
+    </div>
+
+    <div class="section">
+      <div class="section-head">
+        <span class="label">🛠️ 工具集</span>
+        <span class="count" id="toolCount">0</span>
+      </div>
+      <div class="grid" id="grid"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-head">
+        <span class="label">⚡ 快速入口</span>
+        <span class="count"></span>
+      </div>
+      <div class="chip-grid">
+        <a class="chip" href="dashboard/"><span class="k">📊</span>仪表盘</a>
+        <a class="chip" href="apps/"><span class="k">📱</span>应用中心</a>
+        <a class="chip" href="tools/"><span class="k">🔧</span>工具集目录</a>
+        <a class="chip" href="docs/"><span class="k">📄</span>文档</a>
+      </div>
+    </div>
   </main>
 
-  <button id="addBtn" class="fab" aria-label="添加工具">+</button>
+  <footer>
+    Alan Toolkit · 纯 HTML/CSS/JS，零构建 · <a href="https://pages.cloudflare.com" target="_blank" rel="noopener">Cloudflare Pages</a> 部署
+  </footer>
 
-  <div class="modal-overlay" id="modal">
-    <div class="modal">
-      <h2>添加工具</h2>
-      <form id="addForm" autocomplete="off">
-        <label>
-          <span>名称</span>
-          <input type="text" name="name" required placeholder="例如: Notion">
-        </label>
-        <label>
-          <span>URL</span>
-          <input type="url" name="url" required placeholder="https://...">
-        </label>
-        <label>
-          <span>分类</span>
-          <select name="category">
-            <option value="dev">开发工具</option>
-            <option value="ai">AI 工具</option>
-            <option value="custom">自定义</option>
-          </select>
-        </label>
-        <label>
-          <span>图标</span>
-          <input type="text" name="icon" placeholder="🔧" maxlength="2">
-        </label>
-        <div class="modal-actions">
-          <button type="button" id="modalCancel">取消</button>
-          <button type="submit">保存</button>
-        </div>
-      </form>
-    </div>
-  </div>
+  <script>
+    (function(){
+      const TOOLS = [
+        {name:'3D 粒子·GLB 模型',url:'tools/particle_glb.html',icon:'🧩',desc:'Three.js 粒子系统 + GLB 模型加载，手势与滑块交互',color:'#8b5cf6'},
+        {name:'建筑 M&E 提示词工具箱',url:'tools/M&E Toolbox.html',icon:'🏗️',desc:'建筑 / 电气 / 给排水 / 暖通 AI 提示词生成与追问',color:'#1a73e8'},
+        {name:'专业报价单生成器',url:'tools/Quotation.html',icon:'🧾',desc:'可编辑报价单，支持打印 / 导出 PDF',color:'#2196F3'},
+        {name:'核芯摘记 3.5',url:'tools/提取核心.html',icon:'🧠',desc:'文本核心词 / 核心观点 / 提示词 / 润色提取工具',color:'#007aff'},
+        {name:'自建房布局确认',url:'tools/自建房布局.html',icon:'📐',desc:'住宅平面布局参数、矢量蓝图与签署审核',color:'#5a8a6a'},
+      ];
 
-  <script src="script.js"></script>
+      const grid=document.getElementById('grid');
+      const countEl=document.getElementById('toolCount');
+      const searchInput=document.getElementById('searchInput');
+      let term='';
+
+      function render(){
+        const filtered=TOOLS.filter(t=>t.name.toLowerCase().includes(term.toLowerCase()));
+        countEl.textContent=filtered.length;
+        grid.innerHTML=filtered.map(t=>
+          `<a class="card" href="${t.url}" style="--card-color:${t.color}">
+             <span class="card-icon">${t.icon}</span>
+             <span class="card-name">${t.name}</span>
+             <span class="card-desc">${t.desc}</span>
+             <span class="card-arrow">→</span>
+           </a>`
+        ).join('');
+      }
+
+      // 主题
+      (function theme(){
+        const html=document.documentElement;
+        const toggle=document.getElementById('themeToggle');
+        const cur=localStorage.getItem('theme')||'dark';
+        html.setAttribute('data-theme',cur);
+        toggle.textContent=cur==='dark'?'☀️':'🌙';
+        toggle.addEventListener('click',()=>{
+          const next=html.getAttribute('data-theme')==='dark'?'light':'dark';
+          html.setAttribute('data-theme',next);
+          toggle.textContent=next==='dark'?'☀️':'🌙';
+          localStorage.setItem('theme',next);
+        });
+      })();
+
+      searchInput.addEventListener('input',e=>{term=e.target.value;render();});
+      render();
+    })();
+  </script>
 </body>
 </html>

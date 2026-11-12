@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ALAN - Quotation / ဈေးနှုန်းတင်ပြလွှာ</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+  :root {
+    --primary-dark: #0a1628;
+    --primary-blue: #1a3a5c;
+    --accent-blue: #2196F3;
+    --accent-cyan: #00bcd4;
+    --silver: #c0c5ce;
+    --silver-light: #e8eaed;
+    --white: #ffffff;
+    --text-dark: #1a1a2e;
+    --text-muted: #6b7280;
+    --border-color: #d1d5db;
+    --success: #10b981;
+    --warning: #f59e0b;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #f0f2f5;
+    padding: 40px 20px;
+    color: var(--text-dark);
+  }
+
+  .doc-container {
+    max-width: 800px;
+    margin: 0 auto;
+    background: var(--white);
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(10,22,40,0.12);
+    overflow: hidden;
+  }
+
+  /* Header */
+  .doc-header {
+    background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-blue) 100%);
+    padding: 40px 50px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .doc-header::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -10%;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(33,150,243,0.15) 0%, transparent 70%);
+    border-radius: 50%;
+  }
+
+  .logo-section {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    z-index: 1;
+  }
+
+  .logo-section img {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    border: 3px solid rgba(255,255,255,0.2);
+    object-fit: cover;
+    background: var(--white);
+  }
+
+  .company-info h1 {
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--white);
+    letter-spacing: 4px;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+  }
+
+  .company-info .tagline {
+    font-size: 11px;
+    color: var(--accent-blue);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-top: 4px;
+    font-weight: 500;
+  }
+
+  .company-info .sub-tag {
+    font-size: 10px;
+    color: var(--silver);
+    margin-top: 2px;
+    opacity: 0.8;
+  }
+
+  .doc-title {
+    text-align: right;
+    z-index: 1;
+  }
+
+  .doc-title h2 {
+    font-size: 38px;
+    font-weight: 700;
+    color: var(--white);
+    letter-spacing: 2px;
+    opacity: 0.95;
+  }
+
+  .doc-title .doc-subtitle {
+    font-size: 14px;
+    color: var(--accent-cyan);
+    margin-top: 6px;
+    font-weight: 500;
+  }
+
+  .doc-title .doc-type {
+    font-size: 11px;
+    color: var(--silver);
+    letter-spacing: 1px;
+    margin-top: 4px;
+  }
+
+  /* Contact Bar */
+  .contact-bar {
+    background: linear-gradient(90deg, #0d1f35 0%, #142d4c 100%);
+    padding: 14px 50px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+
+  .contact-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--silver);
+  }
+
+  .contact-item svg {
+    width: 16px;
+    height: 16px;
+    fill: var(--accent-blue);
+    flex-shrink: 0;
+  }
+
+  .contact-item .label {
+    color: var(--accent-cyan);
+    font-weight: 500;
+  }
+
+  /* Body */
+  .doc-body {
+    padding: 40px 50px;
+  }
+
+  .info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    margin-bottom: 35px;
+  }
+
+  .info-box {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border-radius: 10px;
+    padding: 24px;
+    border-left: 4px solid var(--accent-blue);
+  }
+
+  .info-box.alt {
+    border-left-color: var(--accent-cyan);
+  }
+
+  .info-box h3 {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--text-muted);
+    margin-bottom: 14px;
+    font-weight: 600;
+  }
+
+  .info-box p {
+    font-size: 14px;
+    line-height: 1.8;
+    color: var(--text-dark);
+  }
+
+  .info-box .highlight {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--primary-dark);
+  }
+
+  /* Service Categories */
+  .service-categories {
+    margin-bottom: 30px;
+  }
+
+  .service-categories h3 {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--text-muted);
+    margin-bottom: 16px;
+    font-weight: 600;
+  }
+
+  .service-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .service-tag {
+    background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-blue) 100%);
+    color: var(--white);
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+  }
+
+  .service-tag.light {
+    background: linear-gradient(135deg, #e6f3ff 0%, #d4edff 100%);
+    color: var(--primary-blue);
+  }
+
+  /* Table */
+  .doc-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin-bottom: 30px;
+  }
+
+  .doc-table thead th {
+    background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-blue) 100%);
+    color: var(--white);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 16px 18px;
+    text-align: left;
+  }
+
+  .doc-table thead th:first-child { border-radius: 8px 0 0 0; }
+  .doc-table thead th:last-child { border-radius: 0 8px 0 0; text-align: right; }
+
+  .doc-table tbody td {
+    padding: 16px 18px;
+    font-size: 14px;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-dark);
+  }
+
+  .doc-table tbody tr:nth-child(even) {
+    background: #f8fafc;
+  }
+
+  .doc-table tbody td:last-child { text-align: right; font-weight: 600; }
+
+  .doc-table tbody td:first-child { font-weight: 500; }
+
+  .doc-table tbody td .item-type {
+    font-size: 11px;
+    color: var(--accent-blue);
+    font-weight: 500;
+    margin-top: 2px;
+  }
+
+  /* Totals */
+  .totals-section {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 35px;
+  }
+
+  .totals-box {
+    width: 320px;
+  }
+
+  .total-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    font-size: 14px;
+    border-bottom: 1px dashed var(--border-color);
+  }
+
+  .total-row.grand {
+    background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-blue) 100%);
+    color: var(--white);
+    padding: 18px 24px;
+    border-radius: 10px;
+    margin-top: 10px;
+    border: none;
+    font-size: 18px;
+    font-weight: 700;
+  }
+
+  .total-row.grand span:last-child {
+    font-size: 22px;
+    letter-spacing: 1px;
+  }
+
+  /* Validity & Terms */
+  .terms-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 30px;
+  }
+
+  .terms-box {
+    background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+    border-radius: 10px;
+    padding: 20px;
+    border: 1px solid rgba(245,158,11,0.2);
+  }
+
+  .terms-box.valid {
+    background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+    border-color: rgba(16,185,129,0.2);
+  }
+
+  .terms-box h3 {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+    font-weight: 600;
+  }
+
+  .terms-box p {
+    font-size: 13px;
+    color: var(--text-dark);
+    line-height: 1.7;
+  }
+
+  /* Signature */
+  .signature-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 60px;
+    margin-top: 50px;
+    padding-top: 30px;
+    border-top: 2px solid var(--border-color);
+  }
+
+  .signature-box {
+    text-align: center;
+  }
+
+  .signature-line {
+    border-bottom: 1px solid var(--text-dark);
+    height: 60px;
+    margin-bottom: 10px;
+  }
+
+  .signature-box p {
+    font-size: 12px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  /* Footer */
+  .doc-footer {
+    background: linear-gradient(135deg, var(--primary-dark) 0%, #0d1f35 100%);
+    padding: 30px 50px;
+    text-align: center;
+  }
+
+  .doc-footer p {
+    color: var(--silver);
+    font-size: 12px;
+    line-height: 1.8;
+  }
+
+  .doc-footer .brand {
+    color: var(--white);
+    font-weight: 600;
+    font-size: 14px;
+    letter-spacing: 2px;
+  }
+
+  .doc-footer .divider {
+    width: 60px;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent-blue), var(--accent-cyan));
+    margin: 12px auto;
+    border-radius: 2px;
+  }
+
+  /* Print */
+  @media print {
+    body { background: white; padding: 0; }
+    .doc-container { box-shadow: none; border-radius: 0; }
+  }
+
+  .editable-hint {
+    text-align: center;
+    padding: 15px;
+    font-size: 12px;
+    color: var(--text-muted);
+    background: #f8fafc;
+    border-top: 1px solid var(--border-color);
+  }
+</style>
+</head>
+<body>
+
+<div class="doc-container">
+  <!-- Header -->
+  <div class="doc-header">
+    <div class="logo-section">
+      <img src="/mnt/agents/upload/1000309841.png" alt="ALAN Logo">
+      <div class="company-info">
+        <h1>ALAN</h1>
+        <div class="tagline">Personal Technical Service</div>
+        <div class="sub-tag">ကိုယ်ပိုင်နည်းပညာဝန်ဆောင်မှု</div>
+      </div>
+    </div>
+    <div class="doc-title">
+      <h2>QUOTATION</h2>
+      <div class="doc-subtitle">ဈေးနှုန်းတင်ပြလွှာ</div>
+      <div class="doc-type">报价单 / Price Estimate</div>
+    </div>
+  </div>
+
+  <!-- Contact Bar -->
+  <div class="contact-bar">
+    <div class="contact-item">
+      <svg viewBox="0 0 24 24"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
+      <span class="label">Tel:</span>
+      <span>+959444010009</span>
+    </div>
+    <div class="contact-item">
+      <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+      <span class="label">Viber:</span>
+      <span>+959444010009</span>
+    </div>
+    <div class="contact-item">
+      <svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+      <span class="label">WeChat:</span>
+      <span>yanboss13168</span>
+    </div>
+    <div class="contact-item">
+      <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+      <span class="label">Location:</span>
+      <span>Mandalay, Myanmar</span>
+    </div>
+  </div>
+
+  <!-- Body -->
+  <div class="doc-body">
+    <!-- Info Grid -->
+    <div class="info-grid">
+      <div class="info-box">
+        <h3>客户信息 / Customer Info / ဖောက်သည်အချက်အလက်</h3>
+        <p class="highlight" contenteditable="true">客户姓名 / Customer Name</p>
+        <p contenteditable="true">
+          地址 / Address<br>
+          电话 / Phone<br>
+          邮箱 / Email
+        </p>
+      </div>
+      <div class="info-box alt">
+        <h3>报价信息 / Quotation Info / ဈေးနှုန်းတင်ပြချက်</h3>
+        <p><strong>报价编号 / Q-No:</strong> <span contenteditable="true">QT-2026-001</span></p>
+        <p><strong>报价日期 / Date:</strong> <span contenteditable="true">2026-06-05</span></p>
+        <p><strong>有效期至 / Valid Until:</strong> <span contenteditable="true">2026-07-05</span></p>
+        <p><strong>项目地址 / Site:</strong> <span contenteditable="true">Mandalay</span></p>
+      </div>
+    </div>
+
+    <!-- Service Categories -->
+    <div class="service-categories">
+      <h3>服务范围 / Services / ဝန်ဆောင်မှုများ</h3>
+      <div class="service-tags">
+        <div class="service-tag">⚡ Electrical / လျှပ်စစ်</div>
+        <div class="service-tag">☀️ Solar PV / နေရောင်ခြည်စွမ်းအင်</div>
+        <div class="service-tag">📹 IP CCTV / CCTV ကင်မရာ</div>
+        <div class="service-tag">🤖 Hermes System</div>
+        <div class="service-tag">🔧 OpenClaw</div>
+        <div class="service-tag light">🔌 Smart Systems / စမတ်စနစ်</div>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <table class="doc-table">
+      <thead>
+        <tr>
+          <th style="width: 6%">#</th>
+          <th style="width: 40%">项目描述 / Description / ဖော်ပြချက်</th>
+          <th style="width: 12%">数量 / Qty / အရေအတွက်</th>
+          <th style="width: 16%">单价 / Unit / တစ်ခုချင်းဈေး</th>
+          <th style="width: 18%">金额 / Amount / စုစုပေါင်း</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td contenteditable="true">1</td>
+          <td contenteditable="true">
+            电气安装服务 / Electrical Installation
+            <div class="item-type">⚡ Electrical / လျှပ်စစ်</div>
+          </td>
+          <td contenteditable="true">1</td>
+          <td contenteditable="true">0.00</td>
+          <td contenteditable="true">0.00</td>
+        </tr>
+        <tr>
+          <td contenteditable="true">2</td>
+          <td contenteditable="true">
+            太阳能光伏系统 / Solar PV System
+            <div class="item-type">☀️ Solar PV / နေရောင်ခြည်စွမ်းအင်</div>
+          </td>
+          <td contenteditable="true">1</td>
+          <td contenteditable="true">0.00</td>
+          <td contenteditable="true">0.00</td>
+        </tr>
+        <tr>
+          <td contenteditable="true">3</td>
+          <td contenteditable="true">
+            IP CCTV 监控系统 / IP CCTV System
+            <div class="item-type">📹 IP CCTV / CCTV ကင်မရာ</div>
+          </td>
+          <td contenteditable="true">1</td>
+          <td contenteditable="true">0.00</td>
+          <td contenteditable="true">0.00</td>
+        </tr>
+        <tr>
+          <td contenteditable="true">4</td>
+          <td contenteditable="true">
+            Hermes 智能系统 / Hermes Smart System
+            <div class="item-type">🤖 Hermes System</div>
+          </td>
+          <td contenteditable="true">1</td>
+          <td contenteditable="true">0.00</td>
+          <td contenteditable="true">0.00</td>
+        </tr>
+        <tr>
+          <td contenteditable="true">5</td>
+          <td contenteditable="true">
+            OpenClaw 安装部署 / OpenClaw Installation
+            <div class="item-type">🔧 OpenClaw</div>
+          </td>
+          <td contenteditable="true">1</td>
+          <td contenteditable="true">0.00</td>
+          <td contenteditable="true">0.00</td>
+        </tr>
+        <tr>
+          <td contenteditable="true">6</td>
+          <td contenteditable="true">
+            材料费 / Materials / ပစ္စည်းစရိတ်
+            <div class="item-type">📦 Materials</div>
+          </td>
+          <td contenteditable="true">1</td>
+          <td contenteditable="true">0.00</td>
+          <td contenteditable="true">0.00</td>
+        </tr>
+        <tr>
+          <td contenteditable="true">7</td>
+          <td contenteditable="true">
+            人工费 / Labor / လုပ်ခစရိတ်
+            <div class="item-type">👷 Labor</div>
+          </td>
+          <td contenteditable="true">1</td>
+          <td contenteditable="true">0.00</td>
+          <td contenteditable="true">0.00</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Totals -->
+    <div class="totals-section">
+      <div class="totals-box">
+        <div class="total-row">
+          <span>小计 / Subtotal / စုစုပေါင်း</span>
+          <span contenteditable="true">0.00 MMK</span>
+        </div>
+        <div class="total-row">
+          <span>税费 / Tax / အခွန် (0%)</span>
+          <span contenteditable="true">0.00 MMK</span>
+        </div>
+        <div class="total-row">
+          <span>折扣 / Discount / လျှော့ဈေး</span>
+          <span contenteditable="true">0.00 MMK</span>
+        </div>
+        <div class="total-row grand">
+          <span>总计 / TOTAL / စုစုပေါင်း</span>
+          <span contenteditable="true">0.00 MMK</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Validity & Terms -->
+    <div class="terms-section">
+      <div class="terms-box valid">
+        <h3>报价有效期 / Validity / ဈေးနှုန်းသက်တမ်း</h3>
+        <p contenteditable="true">
+          本报价有效期 30 天，自报价日期起算。<br>
+          This quotation is valid for 30 days from the date of issue.<br>
+          ဤဈေးနှုန်းတင်ပြချက်ကို ထုတ်ပြန်သည့်နေ့မှ ၃၀ ရက်အတွင်း သက်တမ်းရှိသည်။
+        </p>
+      </div>
+      <div class="terms-box">
+        <h3>条款说明 / Terms / စည်းကမ်းချက်များ</h3>
+        <p contenteditable="true">
+          • 50% 预付款，完工后付清尾款<br>
+          • 50% deposit, balance upon completion<br>
+          • ပစ္စည်းရောက်ပါက ၅၀% အရင်ပေး၊ ပြီးမှ ကျန်တာပေး
+        </p>
+      </div>
+    </div>
+
+    <!-- Signature -->
+    <div class="signature-section">
+      <div class="signature-box">
+        <div class="signature-line"></div>
+        <p>客户确认 / Customer / ဖောက်သည်</p>
+      </div>
+      <div class="signature-box">
+        <div class="signature-line"></div>
+        <p>服务商 / Service Provider / ဝန်ဆောင်သူ</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="doc-footer">
+    <p class="brand">ALAN</p>
+    <div class="divider"></div>
+    <p>Personal Technical Service — Electrical | Solar PV | IP CCTV | Hermes | OpenClaw</p>
+    <p style="margin-top: 8px; opacity: 0.7;">Mandalay, Myanmar | Tel: +959444010009 | WeChat: yanboss13168</p>
+  </div>
+
+  <div class="editable-hint">
+    💡 提示：点击任意文字即可直接编辑内容，按 Ctrl+P 可打印或保存为 PDF
+  </div>
+</div>
+
+</body>
+</html>

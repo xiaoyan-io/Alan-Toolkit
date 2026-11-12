@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>3D 粒子 · GLB 模型 - Alan Toolkit</title>
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    /* particle_glb 页面专用：全屏 3D + 玻璃拟态控制面板 */
+    html, body { margin: 0; height: 100%; background: #05050a; color: #e8eaf2; overflow: hidden; }
+    #wrap { position: relative; width: 100vw; height: 100vh; }
+    #glcanvas { display: block; width: 100%; height: 100%; }
+    #loading {
+      position: absolute; inset: 0; z-index: 30; display: grid; place-items: center;
+      background: #05050a; color: #e8eaf2; font-size: 14px; letter-spacing: 0.5px;
+      transition: opacity .4s;
+    }
+    .panel {
+      position: absolute; top: 14px; left: 14px; z-index: 40;
+      width: min(300px, 92vw); padding: 14px 16px 16px;
+      background: rgba(15, 15, 24, 0.72);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 14px; backdrop-filter: blur(14px) saturate(140%);
+      box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+      color: #e8eaf2; font-size: 13px; line-height: 1.5;
+    }
+    .panel h1 { margin: 0 0 6px; font-size: 17px; font-weight: 800; letter-spacing: -0.4px;
+      background: linear-gradient(90deg, #8b5cf6, #f59e0b); -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent; background-clip: text; }
+    .panel p.sub { margin: 0 0 12px; color: #94a3b8; font-size: 12px; }
+    .group { margin-bottom: 11px; }
+    .group:last-child { margin-bottom: 0; }
+    .g-title { display:flex; align-items:center; gap:8px; margin-bottom: 7px; font-size: 12.5px; font-weight: 700; color: #cbd5e1; }
+    .g-title i { color: #8b5cf6; }
+    .row { display:flex; justify-content: space-between; gap: 8px; margin-bottom: 4px; font-size: 12px; color: #94a3b8; }
+    input[type=range] { width: 100%; height: 5px; border-radius: 3px; background: rgba(255,255,255,0.08);
+      outline: none; -webkit-appearance: none; accent-color: #8b5cf6; }
+    input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%;
+      background: #8b5cf6; cursor: pointer; box-shadow: 0 0 10px rgba(139,92,246,0.7); }
+    input[type=color] { width: 36px; height: 28px; border: none; border-radius: 8px; cursor: pointer; background: transparent; }
+    .btn {
+      width: 100%; padding: 9px 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.05); color: #e8eaf2; font-size: 12.5px; font-weight: 600;
+      cursor: pointer; transition: .2s; margin-top: 2px;
+    }
+    .btn:hover { border-color: #8b5cf6; background: rgba(139,92,246,0.15); }
+    .btn:active { transform: scale(.98); }
+    .status {
+      margin-top: 10px; padding: 8px 10px; border-radius: 10px;
+      background: rgba(139,92,246,0.12); border: 1px solid rgba(139,92,246,0.35);
+      color: #c7d2fe; font-size: 11.5px; text-align: center;
+    }
+    .hint {
+      position: absolute; bottom: 12px; right: 12px; z-index: 40;
+      padding: 10px 12px; border-radius: 10px;
+      background: rgba(15,15,24,0.72); border: 1px solid rgba(255,255,255,0.08);
+      color: #94a3b8; font-size: 11.5px; max-width: 210px; line-height: 1.5;
+    }
+    .hint b { color: #e8eaf2; }
+    @media (max-width: 600px) { .panel { width: 90vw; font-size: 12px; } }
+  </style>
+</head>
+<body>
+  <div id="wrap">
+    <canvas id="glcanvas"></canvas>
+
+    <div id="loading">初始化 3D 场景…</div>
+
+    <div class="panel">
+      <h1>3D 粒子·GLB</h1>
+      <p class="sub">柔和光点粒子 &bull; 加法混合 &bull; 手势轨道 &bull; 滑块控制</p>
+
+      <div class="group">
+        <div class="g-title"><i class="fas fa-palette"></i> 粒子颜色</div>
+        <div class="row"><span>颜色</span><span id="vColor">#8b5cf6</span></div>
+        <input type="color" id="pColor" value="#8b5cf6">
+      </div>
+
+      <div class="group">
+        <div class="g-title"><i class="fas fa-expand"></i> 粒子大小</div>
+        <div class="row"><span>大小</span><span id="vSize">0.35</span></div>
+        <input type="range" id="pSize" min="0.1" max="2" step="0.05" value="0.35">
+      </div>
+
+      <div class="group">
+        <div class="g-title"><i class="fas fa-layer-group"></i> 粒子数量</div>
+        <div class="row"><span>数量</span><span id="vCount">2000</span></div>
+        <input type="range" id="pCount" min="300" max="6000" step="100" value="2000">
+      </div>
+
+      <div class="group">
+        <div class="g-title"><i class="fas fa-sliders-h"></i> 旋转速度</div>
+        <div class="row"><span>速度</span><span id="vSpeed">0.0008</span></div>
+        <input type="range" id="pSpeed" min="0" max="0.005" step="0.0001" value="0.0008">
+      </div>
+
+      <div class="group">
+        <div class="g-title"><i class="fas fa-opacity"></i> 透明度</div>
+        <div class="row"><span>不透明</span><span id="vOpacity">0.9</span></div>
+        <input type="range" id="pOpacity" min="0" max="1" step="0.05" value="0.9">
+      </div>
+
+      <div class="group">
+        <div class="g-title"><i class="fas fa-cube"></i> GLB 模型</div>
+        <button class="btn" id="btnLoadGLB">加载本地 GLB / GLTF</button>
+        <input type="file" id="glbFile" accept=".glb,.gltf" style="display:none;">
+        <div class="status" id="status">使用内置占位模型（无网络依赖）</div>
+      </div>
+    </div>
+
+    <div class="hint">
+      <b>手势：</b>单指/左键拖拽旋转 &bull; 双指/滚轮缩放 &bull; 双指点击重置视角
+    </div>
+  </div>
+
+  <input type="file" id="glbFileHidden" accept=".glb,.gltf" style="display:none;">
+
+  <!-- Three.js ES modules via importmap（纯静态，无构建） -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+
+  <script type="module">
+    import * as THREE from 'three';
+    import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+    /* ---------- 配置 ---------- */
+    const CFG = {
+      count: 2000,
+      size: 0.35,
+      color: 0x8b5cf6,
+      opacity: 0.9,
+      speed: 0.0008,
+      radius: 15,
+      modelUrl: '', // 可在此填写公开 GLB URL，或使用下方“加载本地 GLB”
+    };
+
+    /* ---------- 核心升级 1：Canvas 生成平滑径向渐变圆形贴图 + 加法混合 ---------- */
+    function makeParticleMap(size = 128) {
+      const c = document.createElement('canvas');
+      c.width = c.height = size;
+      const ctx = c.getContext('2d', { willReadFrequently: false });
+      const r = size / 2;
+      const g = ctx.createRadialGradient(r, r, 0, r, r, r);
+      g.addColorStop(0, 'rgba(255,255,255,1)');          // 中心亮白
+      g.addColorStop(0.30, 'rgba(139, 92, 246, 0.85)');  // 紫晕
+      g.addColorStop(0.70, 'rgba(99, 102, 241, 0.35)');  // 蓝晕
+      g.addColorStop(1, 'rgba(0,0,0,0)');                // 边缘全透明
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, size, size);
+      const t = new THREE.CanvasTexture(c);
+      t.needsUpdate = true;
+      return t;
+    }
+
+    /* ---------- 全局状态 ---------- */
+    let scene, camera, renderer, clock;
+    let model = null, particles = null, pMaterial = null;
+    const controls = { theta: 0, phi: Math.PI * 0.35, dist: 36, target: new THREE.Vector3() };
+    const pointers = new Map();      // pointerId -> {x,y}
+    let touchDist = 0;
+    let rafId = null;
+
+    /* ---------- 初始化 ---------- */
+    function init() {
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x05050a);
+      scene.fog = new THREE.Fog(0x05050a, 12, 70);
+
+      camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 0.1, 140);
+      camera.position.set(0, 0, CFG.dist);
+
+      const canvas = document.getElementById('glcanvas');
+      renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, powerPreference: 'high-performance' });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setSize(innerWidth, innerHeight);
+
+      // 灯光
+      scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+      const dl = new THREE.DirectionalLight(0x8b5cf6, 1.2);
+      dl.position.set(5, 8, 5); scene.add(dl);
+      const pl = new THREE.PointLight(0xf59e0b, 1.6, 70);
+      pl.position.set(-5, 4, -8); scene.add(pl);
+
+      // 粒子材质：圆柔和贴图 + 加法混合（depthWrite 关闭，消除方块锯齿，重叠发光）
+      const pMap = makeParticleMap();
+      pMaterial = new THREE.PointsMaterial({
+        map: pMap,
+        color: new THREE.Color(CFG.color),
+        size: CFG.size,
+        transparent: true,
+        opacity: CFG.opacity,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+        depthTest: true,
+        sizeAttenuation: true,
+      });
+
+      particles = buildParticles(CFG.count);
+      scene.add(particles);
+
+      // 占位模型（不依赖网络，确保开箱即用无报错）
+      buildPlaceholderModel();
+      if (CFG.modelUrl) loadGLB(CFG.modelUrl);
+
+      window.addEventListener('resize', onResize);
+      setupGestures(canvas);
+      setupUI();
+
+      document.getElementById('loading').style.opacity = '0';
+      setTimeout(() => document.getElementById('loading').remove(), 400);
+
+      animate();
+    }
+
+    /* 粒子几何体：球壳均匀分布，仅在数量变化时重建 */
+    function buildParticles(n) {
+      if (particles) {
+        scene.remove(particles);
+        particles.geometry.dispose();
+      }
+      const geo = new THREE.BufferGeometry();
+      const pos = new Float32Array(n * 3);
+      for (let i = 0; i < n; i++) {
+        const u = Math.random(), v = Math.random();
+        const theta = 2 * Math.PI * u;
+        const phi = Math.acos(2 * v - 1);
+        const rad = CFG.radius * (0.55 + 0.9 * Math.random());
+        pos[i * 3] = rad * Math.sin(phi) * Math.cos(theta);
+        pos[i * 3 + 1] = rad * Math.sin(phi) * Math.sin(theta);
+        pos[i * 3 + 2] = rad * Math.cos(phi);
+      }
+      geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+      return new THREE.Points(geo, pMaterial);
+    }
+
+    /* 占位模型：发光 Ikosahedron + TorusKnot，离线也能看到 3D 内容 */
+    function buildPlaceholderModel() {
+      if (model) {
+        scene.remove(model);
+        model.traverse(o => {
+          if (o.geometry) o.geometry.dispose();
+          if (o.material) o.material.dispose();
+        });
+      }
+      const group = new THREE.Group();
+      const ico = new THREE.Mesh(
+        new THREE.IcosahedronGeometry(2.4, 2),
+        new THREE.MeshStandardMaterial({ color: 0x8b5cf6, emissive: 0x3b0f7c, emissiveIntensity: 1, roughness: 0.3, metalness: 0.4 })
+      );
+      const torus = new THREE.Mesh(
+        new THREE.TorusKnotGeometry(1.7, 0.55, 120, 24),
+        new THREE.MeshStandardMaterial({ color: 0xf59e0b, emissive: 0x5b2a00, emissiveIntensity: 0.8 })
+      );
+      torus.position.y = 0.7;
+      group.add(ico, torus);
+      model = group;
+      scene.add(model);
+    }
+
+    /* GLB 加载（GLTFLoader），失败时保留占位模型，不中断页面 */
+    function loadGLB(url) {
+      const loader = new GLTFLoader();
+      loader.load(
+        url,
+        (gltf) => {
+          const m = gltf.scene || gltf.scenes[0];
+          const box = new THREE.Box3().setFromObject(m);
+          const center = new THREE.Vector3();
+          box.getCenter(center);
+          const size = new THREE.Vector3();
+          box.getSize(size);
+          const maxd = Math.max(size.x, size.y, size.z) || 1;
+          const scale = 5 / maxd;
+          m.scale.set(scale, scale, scale);
+          m.position.sub(center.multiplyScalar(scale));
+          m.traverse(o => {
+            if (o.isMesh) {
+              o.castShadow = true;
+              o.receiveShadow = true;
+              if (o.material) o.material = o.material.clone();
+            }
+          });
+          if (model) scene.remove(model);
+          model = m;
+          scene.add(model);
+          document.getElementById('status').textContent = 'GLB 模型加载成功';
+          document.getElementById('status').style.color = '#a5f3fc';
+        },
+        undefined,
+        (err) => {
+          console.warn('GLB 加载失败，已保留占位模型:', err);
+          document.getElementById('status').textContent = 'GLB 加载失败，使用占位模型';
+          document.getElementById('status').style.color = '#fca5a5';
+        }
+      );
+    }
+
+    /* ---------- 手势识别：pointer/touch（无摄像头、无 MediaPipe，绝不报错） ---------- */
+    function setupGestures(el) {
+      const down = (e) => {
+        e.preventDefault();
+        pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        el.setPointerCapture(e.pointerId);
+      };
+      const move = (e) => {
+        e.preventDefault();
+        pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+        if (pointers.size === 1) {
+          // 单指 / 左键：绕目标旋转（轨道）
+          const p = pointers.get(e.pointerId);
+          const dx = (e.clientX - p.x) * 0.004;
+          const dy = (e.clientY - p.y) * 0.004;
+          controls.theta += dx;
+          controls.phi = THREE.MathUtils.clamp(controls.phi + dy, 0.05, Math.PI - 0.05);
+          pointers.get(e.pointerId).x = e.clientX;
+          pointers.get(e.pointerId).y = e.clientY;
+        } else if (pointers.size >= 2) {
+          // 双指：捏合缩放
+          const arr = [...pointers.values()];
+          const d = Math.hypot(arr[0].x - arr[1].x, arr[0].y - arr[1].y);
+          if (touchDist) {
+            controls.dist = THREE.MathUtils.clamp(controls.dist - (d - touchDist) * 0.005, 10, 100);
+          }
+          touchDist = d;
+        }
+      };
+      const up = (e) => {
+        pointers.delete(e.pointerId);
+        if (pointers.size === 0) touchDist = 0;
+        el.releasePointerCapture(e.pointerId);
+      };
+      ['pointerdown', 'pointermove', 'pointerup', 'pointercancel'].forEach(name =>
+        el.addEventListener(name, name === 'pointerdown' ? down : name === 'pointermove' ? move : up, { passive: false })
+      );
+
+      // 双指点击：重置视角
+      let lastTwoTap = 0;
+      el.addEventListener('pointerup', (e) => {
+        if (pointers.size === 0) {
+          const now = Date.now();
+          if (now - lastTwoTap < 300) {
+            controls.dist = 36; controls.theta = 0; controls.phi = Math.PI * 0.35;
+          }
+          lastTwoTap = now;
+        }
+      });
+
+      // 滚轮缩放
+      el.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        controls.dist = THREE.MathUtils.clamp(controls.dist + e.deltaY * 0.02, 10, 100);
+      }, { passive: false });
+    }
+
+    function onResize() {
+      camera.aspect = innerWidth / innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(innerWidth, innerHeight);
+    }
+
+    function updateCamera() {
+      const phi = THREE.MathUtils.clamp(controls.phi, 0.05, Math.PI - 0.05);
+      camera.position.x = controls.dist * Math.sin(phi) * Math.sin(controls.theta);
+      camera.position.y = controls.dist * Math.cos(phi);
+      camera.position.z = controls.dist * Math.sin(phi) * Math.cos(controls.theta);
+      camera.lookAt(controls.target);
+    }
+
+    /* ---------- UI 滑块控制 ---------- */
+    function setupUI() {
+      const $ = id => document.getElementById(id);
+
+      $('pColor').addEventListener('input', (e) => { pMaterial.color.setStyle(e.target.value); $('vColor').textContent = e.target.value; });
+      $('pSize').addEventListener('input', (e) => { pMaterial.size = parseFloat(e.target.value); $('vSize').textContent = e.target.value; });
+      $('pOpacity').addEventListener('input', (e) => { pMaterial.opacity = parseFloat(e.target.value); $('vOpacity').textContent = e.target.value; });
+      $('pSpeed').addEventListener('input', (e) => { CFG.speed = parseFloat(e.target.value); $('vSpeed').textContent = e.target.value; });
+
+      $('pCount').addEventListener('input', (e) => { $('vCount').textContent = e.target.value; });
+      $('pCount').addEventListener('change', (e) => {
+        CFG.count = parseInt(e.target.value);
+        const p = buildParticles(CFG.count);
+        scene.add(p);
+        particles = p;
+      });
+
+      $('btnLoadGLB').addEventListener('click', () => $('glbFileHidden').click());
+      $('glbFileHidden').addEventListener('change', (e) => {
+        if (e.target.files[0]) loadGLB(URL.createObjectURL(e.target.files[0]));
+      });
+    }
+
+    /* ---------- 动画循环 ---------- */
+    function animate() {
+      rafId = requestAnimationFrame(animate);
+      updateCamera();
+      if (model) {
+        model.rotation.y += CFG.speed * 0.6;
+        model.rotation.z += CFG.speed * 0.3;
+      }
+      if (particles) {
+        particles.rotation.y += CFG.speed;
+        particles.rotation.x += CFG.speed * 0.45;
+      }
+      renderer.render(scene, camera);
+    }
+
+    init();
+  </script>
+</body>
+</html>

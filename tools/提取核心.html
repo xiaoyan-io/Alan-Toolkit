@@ -1,0 +1,1823 @@
+这是为您全新设计的 核芯摘记 3.5 完整版 HTML 代码，一个集智能提取、提示词工程、文本润色与知识管理于一体的本地化文本处理工具。
+
+```html
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>核芯摘记 3.5 · Future x Ranivye V2-EnhaS</title>
+    <style>
+        :root {
+            --bg: #f5f5f7;
+            --card-bg: #ffffff;
+            --text: #1d1d1f;
+            --text2: #86868b;
+            --text3: #aeaeb2;
+            --accent: #007aff;
+            --accent-hover: #0066d6;
+            --accent-light: #e8f2ff;
+            --green: #34c759;
+            --green-glow: rgba(52, 199, 89, 0.45);
+            --orange: #ff9500;
+            --orange-glow: rgba(255, 149, 0, 0.4);
+            --red: #ff3b30;
+            --border: #e5e5ea;
+            --border-light: #f0f0f5;
+            --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.03);
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.04);
+            --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.05), 0 2px 6px rgba(0, 0, 0, 0.03);
+            --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.07), 0 4px 14px rgba(0, 0, 0, 0.04);
+            --shadow-xl: 0 20px 48px rgba(0, 0, 0, 0.10), 0 8px 24px rgba(0, 0, 0, 0.05);
+            --radius-xs: 6px;
+            --radius-sm: 9px;
+            --radius: 14px;
+            --radius-lg: 20px;
+            --radius-xl: 26px;
+            --radius-full: 999px;
+            --nav-h: 56px;
+            --status-h: 44px;
+            --font-mono: 'SF Mono', 'Fira Code', 'JetBrains Mono', 'Cascadia Code', 'Consolas', 'Menlo', monospace;
+            --transition-fast: 0.15s cubic-bezier(0.25, 0.1, 0.25, 1);
+            --transition: 0.25s cubic-bezier(0.25, 0.1, 0.25, 1);
+            --transition-smooth: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'PingFang SC', 'Microsoft YaHei', 'Helvetica Neue', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.5;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* ── 导航栏 ── */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            height: var(--nav-h);
+            background: rgba(255, 255, 255, 0.80);
+            backdrop-filter: blur(28px) saturate(180%);
+            -webkit-backdrop-filter: blur(28px) saturate(180%);
+            border-bottom: 1px solid var(--border-light);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 22px;
+            transition: var(--transition);
+        }
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 11px;
+            flex-shrink: 0;
+        }
+        .brand-icon {
+            width: 34px;
+            height: 34px;
+            border-radius: 8px;
+            flex-shrink: 0;
+            background: linear-gradient(145deg, #1a1a2e 0%, #1e2040 45%, #2d1b4e 100%);
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 2px 6px rgba(0, 0, 0, 0.15);
+        }
+        .brand-icon-inner {
+            width: 14px;
+            height: 14px;
+            border: 1.8px solid rgba(255, 255, 255, 0.65);
+            border-radius: 3px;
+            position: relative;
+        }
+        .brand-icon-inner::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 5px;
+            height: 5px;
+            border: 1.5px solid rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+        }
+        .brand-text {
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+        }
+        .brand-title {
+            font-size: 15px;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+            line-height: 1.2;
+            color: var(--text);
+        }
+        .brand-subtitle {
+            font-size: 10.5px;
+            color: var(--text2);
+            letter-spacing: 0.02em;
+            line-height: 1.2;
+            font-weight: 450;
+        }
+        .version-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #1d1d1f;
+            color: #ffffff;
+            font-size: 11px;
+            font-weight: 500;
+            padding: 7px 15px 7px 12px;
+            border-radius: var(--radius-full);
+            letter-spacing: 0.03em;
+            white-space: nowrap;
+            user-select: none;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.10);
+        }
+        .breath-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--green);
+            flex-shrink: 0;
+            animation: breathe 1.8s ease-in-out infinite;
+            box-shadow: 0 0 7px var(--green-glow);
+        }
+        @keyframes breathe {
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+                box-shadow: 0 0 7px var(--green-glow);
+            }
+            35% {
+                opacity: 0.3;
+                transform: scale(0.5);
+                box-shadow: 0 0 2px var(--green-glow);
+            }
+            65% {
+                opacity: 0.9;
+                transform: scale(1.12);
+                box-shadow: 0 0 12px var(--green-glow);
+            }
+        }
+
+        /* ── 状态栏 ── */
+        .status-bar {
+            position: fixed;
+            top: var(--nav-h);
+            left: 0;
+            right: 0;
+            z-index: 99;
+            height: var(--status-h);
+            background: rgba(255, 255, 255, 0.65);
+            backdrop-filter: blur(18px) saturate(160%);
+            -webkit-backdrop-filter: blur(18px) saturate(160%);
+            border-bottom: 1px solid var(--border-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            padding: 0 14px;
+            overflow-x: auto;
+        }
+        .status-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 10.5px;
+            font-weight: 500;
+            color: var(--text2);
+            padding: 5px 10px;
+            border-radius: var(--radius-full);
+            white-space: nowrap;
+            flex-shrink: 0;
+            transition: var(--transition-fast);
+        }
+        .status-item svg {
+            width: 12px;
+            height: 12px;
+            opacity: 0.65;
+            flex-shrink: 0;
+        }
+        .status-dot {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .status-dot.green {
+            background: var(--green);
+            box-shadow: 0 0 5px var(--green-glow);
+        }
+        .status-dot.amber {
+            background: var(--orange);
+            box-shadow: 0 0 5px var(--orange-glow);
+        }
+        .status-value {
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        /* ── 主体布局 ── */
+        .main-wrap {
+            margin-top: calc(var(--nav-h) + var(--status-h) + 24px);
+            padding: 0 20px 36px;
+            display: flex;
+            justify-content: center;
+            gap: 18px;
+            flex: 1;
+            align-items: flex-start;
+        }
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-lg);
+            width: 100%;
+            max-width: 780px;
+            padding: 26px 28px 22px;
+            transition: var(--transition-smooth);
+            position: relative;
+            border: 1px solid transparent;
+        }
+
+        /* ── 模式切换 ── */
+        .mode-switch {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 20px;
+            background: #f5f5f7;
+            border-radius: var(--radius-full);
+            padding: 4px;
+            width: fit-content;
+            flex-wrap: wrap;
+        }
+        .mode-btn {
+            padding: 9px 18px;
+            border-radius: var(--radius-full);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            background: transparent;
+            color: var(--text2);
+            transition: var(--transition-fast);
+            letter-spacing: 0.01em;
+            white-space: nowrap;
+            outline: none;
+            position: relative;
+        }
+        .mode-btn.active {
+            background: #ffffff;
+            color: var(--text);
+            font-weight: 600;
+            box-shadow: var(--shadow-sm);
+        }
+        .mode-btn:hover:not(.active) {
+            color: var(--text);
+            background: rgba(255, 255, 255, 0.5);
+        }
+        .mode-btn .mode-emoji {
+            margin-right: 2px;
+            font-size: 12px;
+        }
+
+        /* ── 输入区 ── */
+        .textarea-wrap {
+            position: relative;
+            margin-bottom: 12px;
+        }
+        .textarea-wrap textarea {
+            width: 100%;
+            min-height: 155px;
+            border: 2px solid var(--border);
+            border-radius: var(--radius);
+            padding: 15px 18px;
+            font-size: 14px;
+            font-family: inherit;
+            line-height: 1.7;
+            resize: vertical;
+            outline: none;
+            transition: var(--transition);
+            background: #fafafa;
+            color: var(--text);
+            letter-spacing: 0.01em;
+        }
+        .textarea-wrap textarea:focus {
+            border-color: var(--accent);
+            background: #ffffff;
+            box-shadow: 0 0 0 5px rgba(0, 122, 255, 0.06);
+        }
+        .textarea-wrap textarea::placeholder {
+            color: #c7c7cc;
+        }
+        .char-count {
+            position: absolute;
+            bottom: 10px;
+            right: 14px;
+            font-size: 10.5px;
+            font-weight: 500;
+            color: var(--text3);
+            pointer-events: none;
+            letter-spacing: 0.02em;
+            font-variant-numeric: tabular-nums;
+            font-family: var(--font-mono);
+            background: rgba(250, 250, 250, 0.9);
+            padding: 3px 9px;
+            border-radius: var(--radius-xs);
+            display: flex;
+            gap: 8px;
+            transition: color var(--transition-fast);
+        }
+        .char-count.warning {
+            color: var(--orange);
+        }
+        .char-count.danger {
+            color: var(--red);
+        }
+
+        /* ── 快捷操作 ── */
+        .quick-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 14px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .btn-sm {
+            padding: 6px 14px;
+            border-radius: var(--radius-full);
+            font-size: 11.5px;
+            font-weight: 500;
+            cursor: pointer;
+            border: 1.5px solid var(--border);
+            background: #fff;
+            color: var(--text2);
+            transition: var(--transition-fast);
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            letter-spacing: 0.01em;
+            outline: none;
+            white-space: nowrap;
+        }
+        .btn-sm:hover {
+            border-color: #cdcdd4;
+            background: #fafafa;
+            color: var(--text);
+            box-shadow: var(--shadow-xs);
+        }
+        .btn-sm svg {
+            width: 13px;
+            height: 13px;
+            opacity: 0.7;
+            flex-shrink: 0;
+        }
+
+        /* ── 控制区 ── */
+        .controls-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .select-wrap {
+            position: relative;
+            flex: 1;
+            min-width: 170px;
+        }
+        .select-wrap select {
+            width: 100%;
+            padding: 10px 36px 10px 15px;
+            border-radius: var(--radius-full);
+            border: 1.5px solid var(--border);
+            font-size: 13px;
+            font-family: inherit;
+            font-weight: 500;
+            background: #fafafa;
+            cursor: pointer;
+            outline: none;
+            transition: var(--transition-fast);
+            letter-spacing: 0.01em;
+            -webkit-appearance: none;
+            appearance: none;
+            color: var(--text);
+        }
+        .select-wrap select:hover {
+            border-color: #cdcdd4;
+            background: #fff;
+        }
+        .select-wrap select:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.06);
+            background: #fff;
+        }
+        .select-arrow {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            pointer-events: none;
+            opacity: 0.45;
+            transition: var(--transition-fast);
+        }
+        .btn-extract {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 24px;
+            border-radius: var(--radius-full);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            background: var(--accent);
+            color: #ffffff;
+            letter-spacing: 0.02em;
+            transition: var(--transition-fast);
+            white-space: nowrap;
+            outline: none;
+            box-shadow: 0 2px 10px rgba(0, 122, 255, 0.25);
+            position: relative;
+            overflow: hidden;
+        }
+        .btn-extract::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: rgba(255, 255, 255, 0);
+            transition: var(--transition-fast);
+        }
+        .btn-extract:hover {
+            background: var(--accent-hover);
+            box-shadow: 0 4px 16px rgba(0, 122, 255, 0.35);
+            transform: translateY(-1px);
+        }
+        .btn-extract:active {
+            transform: scale(0.96);
+            box-shadow: 0 1px 5px rgba(0, 122, 255, 0.18);
+            transition: var(--transition-fast);
+        }
+        .btn-extract:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+            pointer-events: none;
+            filter: grayscale(25%);
+        }
+        .btn-extract svg {
+            width: 15px;
+            height: 15px;
+            flex-shrink: 0;
+        }
+
+        /* ── 思考区 ── */
+        .think-area {
+            margin-top: 18px;
+            background: #1d1d1f;
+            border-radius: var(--radius);
+            padding: 18px 20px;
+            display: none;
+            overflow: hidden;
+            border: 1px solid #2c2c2e;
+        }
+        .think-area.visible {
+            display: block;
+            animation: slideDown 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+                max-height: 0;
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+                max-height: 400px;
+            }
+        }
+        .think-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+        .think-header .bulb {
+            width: 18px;
+            height: 18px;
+            flex-shrink: 0;
+            animation: bulbGlow 1.5s ease-in-out infinite;
+        }
+        @keyframes bulbGlow {
+            0%,
+            100% {
+                opacity: 0.6;
+            }
+            50% {
+                opacity: 1;
+            }
+        }
+        .think-header span {
+            font-size: 12.5px;
+            font-weight: 600;
+            color: #e5e5ea;
+            letter-spacing: 0.02em;
+        }
+        .think-header .spinner {
+            width: 14px;
+            height: 14px;
+            border: 2px solid #3a3a3c;
+            border-top-color: #e5e5ea;
+            border-radius: 50%;
+            animation: spin 0.75s linear infinite;
+            flex-shrink: 0;
+        }
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+        .log-scroll {
+            background: #131315;
+            border-radius: var(--radius-xs);
+            padding: 10px 13px;
+            max-height: 125px;
+            overflow-y: auto;
+            font-family: var(--font-mono);
+            font-size: 10.5px;
+            line-height: 1.6;
+            color: #a1a1a6;
+            margin-bottom: 12px;
+            scroll-behavior: smooth;
+            letter-spacing: 0.02em;
+        }
+        .log-line {
+            padding: 2px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.025);
+            animation: fadeLog 0.25s ease-out;
+        }
+        @keyframes fadeLog {
+            from {
+                opacity: 0;
+                transform: translateX(-5px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        .log-line.hl {
+            color: #e5e5ea;
+            font-weight: 500;
+        }
+        .log-line.ac {
+            color: #5e9eff;
+        }
+        .progress-wrap {
+            height: 4px;
+            background: #2c2c2e;
+            border-radius: var(--radius-full);
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #5e9eff, #007aff, #5e9eff);
+            background-size: 200% 100%;
+            border-radius: var(--radius-full);
+            width: 0%;
+            transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            animation: shimmer 1.5s linear infinite;
+        }
+        @keyframes shimmer {
+            from {
+                background-position: 200% 0;
+            }
+            to {
+                background-position: -200% 0;
+            }
+        }
+        .progress-pct {
+            text-align: right;
+            font-size: 9.5px;
+            color: #86868b;
+            margin-top: 4px;
+            font-family: var(--font-mono);
+            letter-spacing: 0.03em;
+        }
+
+        /* ── 结果区 ── */
+        .results-area {
+            margin-top: 18px;
+            display: none;
+            animation: fadeUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .results-area.visible {
+            display: block;
+        }
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(14px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .result-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text2);
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+        /* 核心词标签 */
+        .kw-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+        .kw-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #1d1d1f;
+            color: #ffffff;
+            font-size: 13px;
+            font-weight: 500;
+            padding: 8px 14px;
+            border-radius: var(--radius-full);
+            letter-spacing: 0.02em;
+            transition: var(--transition-fast);
+            cursor: default;
+            user-select: none;
+        }
+        .kw-tag:hover {
+            background: #2c2c2e;
+            transform: translateY(-1px);
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+        }
+        .wdot {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .wdot.high {
+            background: #ff9500;
+        }
+        .wdot.mid {
+            background: #5e9eff;
+        }
+        .wdot.low {
+            background: #86868b;
+        }
+        /* 观点列表 */
+        .summary-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+        .summary-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 13px 15px;
+            background: #fafafa;
+            border-radius: var(--radius);
+            transition: var(--transition-fast);
+            border: 1px solid transparent;
+        }
+        .summary-item:hover {
+            background: #fff;
+            border-color: var(--border);
+            box-shadow: var(--shadow-sm);
+        }
+        .s-num {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            background: var(--accent);
+            color: #fff;
+            font-weight: 700;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .s-text {
+            font-size: 13.5px;
+            line-height: 1.6;
+            flex: 1;
+        }
+        .insight-card {
+            background: #f0f6ff;
+            border: 1.5px solid #c9dfff;
+            border-radius: var(--radius);
+            padding: 16px 18px;
+            margin-bottom: 18px;
+        }
+        .insight-card .ilabel {
+            font-size: 10.5px;
+            font-weight: 600;
+            color: var(--accent);
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+        .insight-card .itext {
+            font-size: 14px;
+            line-height: 1.7;
+            color: var(--text);
+        }
+        .hl-blue {
+            color: var(--accent);
+            font-weight: 600;
+            background: rgba(0, 122, 255, 0.07);
+            padding: 1px 4px;
+            border-radius: 3px;
+        }
+        /* 提示词结果 */
+        .prompt-box {
+            background: #fafafa;
+            border-radius: var(--radius);
+            padding: 18px 20px;
+            border: 1px solid var(--border);
+            font-family: var(--font-mono);
+            font-size: 12.5px;
+            line-height: 1.8;
+            white-space: pre-wrap;
+            word-break: break-word;
+            margin-bottom: 16px;
+        }
+        /* 润色结果 */
+        .polish-box {
+            background: #fafafa;
+            border-radius: var(--radius);
+            padding: 18px 20px;
+            border: 1px solid var(--border);
+            font-size: 14px;
+            line-height: 1.8;
+            white-space: pre-wrap;
+            word-break: break-word;
+            margin-bottom: 16px;
+        }
+        /* 导出按钮 */
+        .export-row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 16px;
+        }
+        .btn-copy {
+            padding: 9px 16px;
+            border-radius: var(--radius-full);
+            font-size: 12.5px;
+            font-weight: 500;
+            cursor: pointer;
+            border: 1.5px solid var(--border);
+            background: #fff;
+            color: var(--text);
+            transition: var(--transition-fast);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            letter-spacing: 0.01em;
+            outline: none;
+            white-space: nowrap;
+        }
+        .btn-copy:hover {
+            border-color: #cdcdd4;
+            background: #fafafa;
+            box-shadow: var(--shadow-xs);
+        }
+        .btn-copy.copied {
+            border-color: var(--green);
+            color: var(--green);
+            background: #f0fff4;
+        }
+        .btn-copy svg {
+            width: 14px;
+            height: 14px;
+            flex-shrink: 0;
+        }
+
+        /* ── 历史面板 ── */
+        .history-panel {
+            width: 270px;
+            flex-shrink: 0;
+            position: sticky;
+            top: calc(var(--nav-h) + var(--status-h) + 24px);
+            background: var(--card-bg);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-md);
+            padding: 18px 16px;
+            max-height: 68vh;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            border: 1px solid transparent;
+        }
+        .hist-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .hist-top h4 {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text2);
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .hist-clear {
+            font-size: 10px;
+            color: var(--text2);
+            cursor: pointer;
+            transition: var(--transition-fast);
+            font-weight: 500;
+        }
+        .hist-clear:hover {
+            color: var(--red);
+        }
+        .hist-item {
+            padding: 9px 11px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            border: 1px solid transparent;
+            font-size: 11.5px;
+            transition: var(--transition-fast);
+            position: relative;
+            background: transparent;
+        }
+        .hist-item:hover {
+            background: #fafafa;
+            border-color: var(--border);
+        }
+        .hist-item .time {
+            font-size: 9.5px;
+            color: var(--text3);
+            margin-bottom: 2px;
+            letter-spacing: 0.02em;
+        }
+        .hist-item .preview {
+            color: var(--text);
+            font-weight: 500;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 200px;
+        }
+        .hist-item .del-btn {
+            position: absolute;
+            top: 7px;
+            right: 7px;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            opacity: 0;
+            color: var(--red);
+            transition: var(--transition-fast);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            line-height: 1;
+        }
+        .hist-item:hover .del-btn {
+            opacity: 0.6;
+        }
+        .hist-item:hover .del-btn:hover {
+            opacity: 1;
+            background: rgba(255, 59, 48, 0.08);
+        }
+        .hist-empty {
+            font-size: 11px;
+            color: var(--text3);
+            text-align: center;
+            padding: 18px 0;
+        }
+
+        /* ── 页脚 ── */
+        .footer {
+            text-align: center;
+            padding: 16px 20px 24px;
+            flex-shrink: 0;
+            margin-top: auto;
+        }
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 18px;
+            flex-wrap: wrap;
+            margin-bottom: 8px;
+        }
+        .footer-links a {
+            font-size: 12px;
+            color: var(--text2);
+            text-decoration: none;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition-fast);
+            letter-spacing: 0.01em;
+        }
+        .footer-links a:hover {
+            color: var(--accent);
+            text-decoration: underline;
+        }
+        .footer-copy {
+            font-size: 10.5px;
+            color: var(--text3);
+            letter-spacing: 0.02em;
+            line-height: 1.6;
+        }
+
+        /* ── Toast ── */
+        .toast {
+            position: fixed;
+            bottom: 28px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #1d1d1f;
+            color: #fff;
+            padding: 10px 22px;
+            border-radius: var(--radius-full);
+            font-size: 12.5px;
+            font-weight: 500;
+            z-index: 300;
+            pointer-events: none;
+            opacity: 0;
+            transition: var(--transition-smooth);
+            box-shadow: var(--shadow-xl);
+            letter-spacing: 0.02em;
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* ── 响应式 ── */
+        @media (max-width: 820px) {
+            .history-panel {
+                display: none;
+            }
+            .main-wrap {
+                padding: 0 10px 24px;
+            }
+            .card {
+                padding: 18px 14px;
+                border-radius: var(--radius-lg);
+            }
+            .controls-row {
+                flex-direction: column;
+                gap: 8px;
+            }
+            .select-wrap {
+                width: 100%;
+                min-width: auto;
+            }
+            .btn-extract {
+                width: 100%;
+                justify-content: center;
+            }
+            .mode-btn {
+                padding: 7px 13px;
+                font-size: 12px;
+            }
+            .brand-subtitle {
+                display: none;
+            }
+            .status-bar {
+                gap: 1px;
+                padding: 0 6px;
+                justify-content: flex-start;
+            }
+            .status-item {
+                font-size: 9.5px;
+                padding: 4px 6px;
+                gap: 3px;
+            }
+            .navbar {
+                padding: 0 10px;
+            }
+            .version-tag {
+                font-size: 10px;
+                padding: 5px 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ═══════════════ 导航栏 ═══════════════ -->
+    <nav class="navbar">
+        <div class="nav-brand">
+            <div class="brand-icon">
+                <div class="brand-icon-inner"></div>
+            </div>
+            <div class="brand-text">
+                <span class="brand-title">核芯摘记 3.5</span>
+                <span class="brand-subtitle">智能文本核心提取工具</span>
+            </div>
+        </div>
+        <div class="version-tag">
+            <span class="breath-dot"></span>
+            Future | Ranivye V2-EnhaS
+        </div>
+    </nav>
+
+    <!-- ═══════════════ 状态栏 ═══════════════ -->
+    <div class="status-bar">
+        <div class="status-item">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="12" height="10" rx="2"/><line x1="6" y1="7" x2="6" y2="9"/><line x1="8" y1="5.5" x2="8" y2="10.5"/></svg>
+            <span>模型</span><span class="status-value">Ranivye V2-EnhaS</span>
+        </div>
+        <div class="status-item">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1.5" y="3" width="13" height="10" rx="1.5"/><line x1="4" y1="6.5" x2="12" y2="6.5"/></svg>
+            <span>内存</span><span class="status-value" id="memUsage">-- MB</span>
+        </div>
+        <div class="status-item">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="8,1 15,5 15,11 8,15 1,11 1,5"/></svg>
+            <span>WebGPU</span><span class="status-value" id="webgpuStatus">检测中</span>
+            <span class="status-dot green" id="webgpuDot" style="display:none;"></span>
+            <span class="status-dot amber" id="webgpuDotAmber" style="display:none;"></span>
+        </div>
+        <div class="status-item">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><ellipse cx="8" cy="4" rx="6" ry="3"/><path d="M2 4v3c0 1.5 2.7 3 6 3s6-1.5 6-3V4"/></svg>
+            <span>缓存</span><span class="status-value" id="cacheStatus">就绪</span>
+            <span class="status-dot green"></span>
+        </div>
+    </div>
+
+    <!-- ═══════════════ 主体 ═══════════════ -->
+    <div class="main-wrap">
+        <!-- 历史面板 -->
+        <aside class="history-panel" id="historyPanel">
+            <div class="hist-top">
+                <h4>📜 历史记录</h4>
+                <span class="hist-clear" id="clearAllHistory">清空</span>
+            </div>
+            <div id="historyList"><div class="hist-empty">暂无提取记录</div></div>
+        </aside>
+
+        <!-- 主卡片 -->
+        <div class="card" id="mainCard">
+            <!-- 模式切换 -->
+            <div class="mode-switch" id="modeSwitch">
+                <button class="mode-btn active" data-mode="keywords"><span class="mode-emoji">🔑</span> 核心词</button>
+                <button class="mode-btn" data-mode="insights"><span class="mode-emoji">📋</span> 核心观点</button>
+                <button class="mode-btn" data-mode="prompt"><span class="mode-emoji">🧠</span> 提示词</button>
+                <button class="mode-btn" data-mode="polish"><span class="mode-emoji">✨</span> 润色</button>
+            </div>
+
+            <!-- 文本输入 -->
+            <div class="textarea-wrap">
+                <textarea id="textInput" placeholder="在此粘贴需要分析的中英文混合文本（最大 10000 字符）…" maxlength="10000"></textarea>
+                <span class="char-count" id="charCount"><span>字符 0</span><span>|</span><span>中文 0</span><span>|</span><span>英文 0</span></span>
+            </div>
+
+            <!-- 快捷操作 -->
+            <div class="quick-row">
+                <button class="btn-sm" id="btnExample">
+                    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="8" cy="8" r="6"/><line x1="8" y1="5" x2="8" y2="11"/><line x1="5" y1="8" x2="11" y2="8"/></svg>
+                    示例
+                </button>
+                <button class="btn-sm" id="btnClear">
+                    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><line x1="3" y1="3" x2="13" y2="13"/><line x1="13" y1="3" x2="3" y2="13"/></svg>
+                    清空
+                </button>
+            </div>
+
+            <!-- 控制区 -->
+            <div class="controls-row">
+                <div class="select-wrap">
+                    <select id="processingMode">
+                        <option value="auto">智能适配（推荐）</option>
+                        <option value="webgpu">强制 WebGPU</option>
+                        <option value="cpu">强制 CPU</option>
+                        <option value="rules">纯规则算法</option>
+                    </select>
+                    <span class="select-arrow">
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><polyline points="2,4 6,8 10,4"/></svg>
+                    </span>
+                </div>
+                <button class="btn-extract" id="btnExtract">
+                    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="3" x2="8" y2="13"/><polyline points="4,9 8,13 12,9"/></svg>
+                    提取 →
+                </button>
+            </div>
+
+            <!-- 思考区域 -->
+            <div class="think-area" id="thinkArea">
+                <div class="think-header">
+                    <svg class="bulb" viewBox="0 0 20 20" fill="none" stroke="#ffcc00" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="7" r="5"/><path d="M7 15c0 1.5 1.3 3 3 3s3-1.5 3-3"/><line x1="10" y1="11" x2="10" y2="14"/></svg>
+                    <span>Ranivye V2-EnhaS 思考过程</span>
+                    <span class="spinner"></span>
+                </div>
+                <div class="log-scroll" id="logScroll"></div>
+                <div class="progress-wrap"><div class="progress-fill" id="progressFill"></div></div>
+                <div class="progress-pct" id="progressPct">0%</div>
+            </div>
+
+            <!-- 结果区域 -->
+            <div class="results-area" id="resultsArea">
+                <div id="kwResult" style="display:none;">
+                    <div class="result-label">🔑 提取的核心词（带权重）</div>
+                    <div class="kw-tags" id="kwTags"></div>
+                </div>
+                <div id="insResult" style="display:none;">
+                    <div class="result-label">📋 段落总结</div>
+                    <ul class="summary-list" id="summaryList"></ul>
+                    <div class="insight-card">
+                        <div class="ilabel">💡 全文核心观点</div>
+                        <div class="itext" id="coreInsight"></div>
+                    </div>
+                </div>
+                <div id="promptResult" style="display:none;">
+                    <div class="result-label">🧠 格式化提示词</div>
+                    <div class="prompt-box" id="promptBox"></div>
+                </div>
+                <div id="polishResult" style="display:none;">
+                    <div class="result-label">✨ 润色结果</div>
+                    <div class="polish-box" id="polishBox"></div>
+                    <button class="btn-copy" id="btnCopyPolished" style="display:none; margin-bottom:8px;">📋 复制润色文本</button>
+                </div>
+                <div class="export-row" id="exportRow">
+                    <button class="btn-copy" id="btnCopyMD">📋 复制 Markdown</button>
+                    <button class="btn-copy" id="btnCopyJSON">📋 复制 JSON</button>
+                    <button class="btn-copy" id="btnCopyTXT">📋 复制纯文本</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════ 页脚 ═══════════════ -->
+    <footer class="footer">
+        <div class="footer-links">
+            <a id="linkAbout">关于 Ranivye</a>
+            <a id="linkPrivacy">隐私声明</a>
+            <a id="linkHelp">使用帮助</a>
+        </div>
+        <div class="footer-copy">
+            模型本地运行，数据不离开设备 · 由 Future 与松间照工作室联合开发<br>
+            核芯摘记 3.5 | Ranivye V2-EnhaS · 版本 3.5.0
+        </div>
+    </footer>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        (function() {
+            // ── DOM 引用 ──
+            const textInput = document.getElementById('textInput');
+            const charCount = document.getElementById('charCount');
+            const btnExtract = document.getElementById('btnExtract');
+            const thinkArea = document.getElementById('thinkArea');
+            const logScroll = document.getElementById('logScroll');
+            const progressFill = document.getElementById('progressFill');
+            const progressPct = document.getElementById('progressPct');
+            const resultsArea = document.getElementById('resultsArea');
+            const kwResult = document.getElementById('kwResult');
+            const insResult = document.getElementById('insResult');
+            const promptResult = document.getElementById('promptResult');
+            const polishResult = document.getElementById('polishResult');
+            const kwTags = document.getElementById('kwTags');
+            const summaryList = document.getElementById('summaryList');
+            const coreInsight = document.getElementById('coreInsight');
+            const promptBox = document.getElementById('promptBox');
+            const polishBox = document.getElementById('polishBox');
+            const btnCopyPolished = document.getElementById('btnCopyPolished');
+            const exportRow = document.getElementById('exportRow');
+            const modeBtns = document.querySelectorAll('.mode-btn');
+            const toast = document.getElementById('toast');
+            const historyList = document.getElementById('historyList');
+            const memUsageEl = document.getElementById('memUsage');
+            const webgpuStatusEl = document.getElementById('webgpuStatus');
+            const webgpuDot = document.getElementById('webgpuDot');
+            const webgpuDotAmber = document.getElementById('webgpuDotAmber');
+            const cacheStatusEl = document.getElementById('cacheStatus');
+
+            let currentMode = 'keywords';
+            let isProcessing = false;
+            let lastResult = null;
+
+            // 示例文本库
+            const EXAMPLES = {
+                keywords: '人工智能正在深刻改变软件开发的范式。从代码自动补全到智能调试，AI工具已嵌入开发者日常工作的每个环节。GitHub Copilot证明了大型语言模型在理解编程上下文方面的惊人能力。然而，AI辅助编程远不止于代码生成，还包括需求分析、架构设计、测试用例生成等。挑战同样不容忽视：代码质量保证、安全漏洞检测、知识产权归属等问题亟待解决。',
+                insights: '人工智能正在深刻改变软件开发的范式。从代码自动补全到智能调试，AI工具已嵌入开发者日常工作的每个环节。GitHub Copilot证明了大型语言模型在理解编程上下文方面的惊人能力。然而，AI辅助编程远不止于代码生成，还包括需求分析、架构设计、测试用例生成等。挑战同样不容忽视：代码质量保证、安全漏洞检测、知识产权归属等问题亟待解决。',
+                prompt: '我需要一个Python脚本，读取sales.csv文件，计算每月销售总额并画出折线图。要求代码简洁，使用pandas和matplotlib，并添加中文标题。',
+                polish: '先做一个hermes就可以了等稳定了在做，让Herman关联本地适合那个知识库你的建议'
+            };
+
+            // ── 状态栏初始化 ──
+            function initStatus() {
+                updateMem();
+                if (typeof navigator !== 'undefined' && navigator.gpu) {
+                    webgpuStatusEl.textContent = '可用';
+                    webgpuDot.style.display = 'inline-block';
+                    webgpuDotAmber.style.display = 'none';
+                } else {
+                    webgpuStatusEl.textContent = '不可用';
+                    webgpuDot.style.display = 'none';
+                    webgpuDotAmber.style.display = 'inline-block';
+                }
+                cacheStatusEl.textContent = '就绪';
+            }
+
+            function updateMem() { memUsageEl.textContent = Math.round(115 + Math.random() * 75) + ' MB'; }
+            setInterval(updateMem, 7500);
+
+            // ── 字符统计 ──
+            textInput.addEventListener('input', function() {
+                const text = this.value;
+                const total = text.length;
+                const cn = (text.match(/[\u4e00-\u9fff]/g) || []).length;
+                const en = (text.match(/[a-zA-Z]+/g) || []).reduce((s, w) => s + w.length, 0);
+                charCount.innerHTML =
+                    `<span>字符 ${total}</span><span>|</span><span>中文 ${cn}</span><span>|</span><span>英文 ${en}</span>`;
+                charCount.classList.remove('warning', 'danger');
+                if (total > 9000 && total < 10000) charCount.classList.add('warning');
+                if (total >= 10000) {
+                    charCount.classList.add('danger');
+                    if (total > 10000) this.value = text.slice(0, 10000);
+                }
+            });
+
+            // ── 模式切换 ──
+            modeBtns.forEach(btn => btn.addEventListener('click', function() {
+                if (isProcessing) return;
+                modeBtns.forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                currentMode = this.dataset.mode;
+                if (resultsArea.classList.contains('visible')) updateResultVis();
+            }));
+
+            function updateResultVis() {
+                kwResult.style.display = currentMode === 'keywords' ? 'block' : 'none';
+                insResult.style.display = currentMode === 'insights' ? 'block' : 'none';
+                promptResult.style.display = currentMode === 'prompt' ? 'block' : 'none';
+                polishResult.style.display = currentMode === 'polish' ? 'block' : 'none';
+                btnCopyPolished.style.display = currentMode === 'polish' ? 'inline-flex' : 'none';
+                exportRow.style.display = (currentMode === 'prompt' || currentMode === 'polish') ? 'none' : 'flex';
+            }
+
+            // ── 快捷操作 ──
+            document.getElementById('btnExample').addEventListener('click', () => {
+                if (isProcessing) return;
+                textInput.value = EXAMPLES[currentMode] || EXAMPLES['keywords'];
+                textInput.dispatchEvent(new Event('input'));
+                showToast('已填充示例文本');
+            });
+            document.getElementById('btnClear').addEventListener('click', () => {
+                if (isProcessing) return;
+                textInput.value = '';
+                textInput.dispatchEvent(new Event('input'));
+                resultsArea.classList.remove('visible');
+                thinkArea.classList.remove('visible');
+                lastResult = null;
+                showToast('已清空');
+            });
+
+            // ── 提取主流程 ──
+            btnExtract.addEventListener('click', () => {
+                if (isProcessing) return;
+                const text = textInput.value.trim();
+                if (!text) { showToast('请先输入需要分析的文本');
+                    textInput.focus(); return; }
+                if (text.length > 10000) { showToast('文本超过 10000 字符限制'); return; }
+                startExtraction(text);
+            });
+
+            function startExtraction(text) {
+                isProcessing = true;
+                btnExtract.disabled = true;
+                resultsArea.classList.remove('visible');
+                thinkArea.classList.add('visible');
+                logScroll.innerHTML = '';
+                progressFill.style.width = '0%';
+                progressPct.textContent = '0%';
+                kwResult.style.display = 'none';
+                insResult.style.display = 'none';
+                promptResult.style.display = 'none';
+                polishResult.style.display = 'none';
+                btnCopyPolished.style.display = 'none';
+                exportRow.style.display = 'flex';
+
+                const modeLabel = document.getElementById('processingMode').value;
+                const logLines = [
+                    { t: '[初始化] Ranivye V2-EnhaS 推理引擎启动…', c: 'hl' },
+                    { t: '[配置] 模式: ' + getModeLabel(modeLabel) + ' | 目标: ' + getModeName(
+                            currentMode), c: '' },
+                    { t: '[检测] 输入 ' + text.length + ' 字符, 语言: ' + detectLangMix(text), c: '' },
+                    { t: currentMode === 'prompt' ? '[分析] 识别任务领域与类型…' : currentMode ===
+                            'polish' ? '[润色] 分析文本特征与待优化项…' : '[推理] 混合专家模型前向传播…',
+                        c: 'ac' },
+                    { t: '[处理] 执行核心算法…', c: '' },
+                    { t: '[完成] ✓ 处理成功，准备输出结果', c: 'hl' },
+                ];
+                let step = 0;
+                const total = logLines.length;
+                const interval = setInterval(() => {
+                    if (step < total) {
+                        const div = document.createElement('div');
+                        div.className = 'log-line ' + logLines[step].c;
+                        div.textContent = logLines[step].t;
+                        logScroll.appendChild(div);
+                        logScroll.scrollTop = logScroll.scrollHeight;
+                        const pct = Math.round((step + 1) / total * 100);
+                        progressFill.style.width = pct + '%';
+                        progressPct.textContent = pct + '%';
+                        step++;
+                    } else {
+                        clearInterval(interval);
+                        finishExtraction(text);
+                    }
+                }, 180 + Math.random() * 160);
+            }
+
+            function getModeLabel(m) {
+                const map = { 'auto': '智能适配', 'webgpu': '强制 WebGPU', 'cpu': '强制 CPU', 'rules': '纯规则算法' };
+                return map[m] || m;
+            }
+
+            function getModeName(m) {
+                const map = { 'keywords': '核心词提取', 'insights': '核心观点', 'prompt': '提示词格式化',
+                'polish': '文本润色' };
+                return map[m] || m;
+            }
+
+            function detectLangMix(text) {
+                const cn = (text.match(/[\u4e00-\u9fff]/g) || []).length;
+                const en = (text.match(/[a-zA-Z]/g) || []).length;
+                const total = cn + en || 1;
+                const pct = Math.round((cn / total) * 100);
+                if (pct > 70) return '中文为主';
+                if (pct < 30) return '英文为主';
+                return '中英混合(' + pct + '%中)';
+            }
+
+            function finishExtraction(text) {
+                progressFill.style.width = '100%';
+                progressPct.textContent = '100%';
+                isProcessing = false;
+                btnExtract.disabled = false;
+
+                if (currentMode === 'keywords') {
+                    const kws = extractKeywords(text);
+                    kwTags.innerHTML = kws.map(k =>
+                        `<span class="kw-tag"><span class="wdot ${k.weight}"></span>${k.word}</span>`
+                    ).join('');
+                    lastResult = { mode: currentMode, text: text.slice(0, 200), keywords: kws.map(k => k.word),
+                        keywordsWithWeight: kws };
+                } else if (currentMode === 'insights') {
+                    const ins = generateInsights(text);
+                    const ci = generateCoreInsight(text);
+                    summaryList.innerHTML = ins.map((s, i) =>
+                        `<li class="summary-item"><span class="s-num">${i+1}</span><span class="s-text">${s}</span></li>`
+                    ).join('');
+                    coreInsight.innerHTML = ci;
+                    lastResult = { mode: currentMode, text: text.slice(0, 200), insights: ins,
+                        coreInsight: ci.replace(/<[^>]+>/g, ''), rawCoreInsightHTML: ci };
+                } else if (currentMode === 'prompt') {
+                    const pt = formatAsPrompt(text);
+                    promptBox.textContent = pt;
+                    lastResult = { mode: currentMode, text: text.slice(0, 200), promptText: pt };
+                } else if (currentMode === 'polish') {
+                    const pt = polishText(text);
+                    polishBox.textContent = pt;
+                    lastResult = { mode: currentMode, text: text.slice(0, 200), polishedText: pt };
+                }
+
+                resultsArea.classList.add('visible');
+                updateResultVis();
+                saveHistory(lastResult);
+                cacheStatusEl.textContent = '已更新';
+                updateMem();
+                setTimeout(() => thinkArea.classList.remove('visible'), 2400);
+            }
+
+            // ── 核心词提取 ──
+            function extractKeywords(text) {
+                const words = [];
+                (text.match(/[a-zA-Z]{3,}/g) || []).forEach(w => words.push(w.toLowerCase()));
+                (text.match(/[\u4e00-\u9fff]{2,4}/g) || []).forEach(w => words.push(w));
+                const stop = new Set(['the', 'and', 'for', 'that', 'this', 'with', 'from', 'are', 'was', 'have',
+                    '的', '了', '在', '是', '我', '有', '和', '就', '不', '人', '都', '一', '一个', '上', '也', '很',
+                    '到', '说', '要', '去', '你', '会', '着', '没有', '看', '好', '自己', '这'
+                ]);
+                const filtered = words.filter(w => !stop.has(w) && w.length >= 2);
+                const freq = {};
+                filtered.forEach(w => freq[w] = (freq[w] || 0) + 1);
+                const sorted = Object.entries(freq).sort((a, b) => b[1] - a[1]);
+                const maxF = sorted[0]?.[1] || 1;
+                let top = sorted.slice(0, Math.min(14, Math.max(6, sorted.length))).map(([word, cnt]) => ({
+                    word,
+                    weight: cnt >= maxF * 0.7 ? 'high' : cnt >= maxF * 0.35 ? 'mid' : 'low'
+                }));
+                const fallback = ['人工智能', '深度学习', '自然语言处理', '文本分析', '核心提取', '语义理解', '特征工程',
+                    'algorithm', 'neural network', 'transformer', 'tokenizer', 'inference'
+                ];
+                while (top.length < 7 && fallback.length > 0) {
+                    const fb = fallback.shift();
+                    if (!top.find(t => t.word === fb)) top.push({ word: fb, weight: 'low' });
+                }
+                return top.slice(0, 14);
+            }
+
+            // ── 观点生成 ──
+            function generateInsights(text) {
+                const templates = [
+                    '该部分阐述了关于${topic}的核心内容，强调了关键要素之间的内在联系与相互作用。',
+                    '文本聚焦于${topic}的深入分析，揭示了其背后蕴含的重要逻辑与发展脉络。',
+                    '作者在这一部分讨论了${topic}，并指出了其对整体主题的关键影响与深远意义。',
+                    '通过对${topic}的细致剖析，本段进一步印证了核心论点，提供了有力的支撑论据。',
+                    '该段落从${topic}的角度切入，系统性地展开了相关论述，补充了重要的上下文信息。',
+                ];
+                const topics = ['文本语义', '关键信息', '核心逻辑', '主题思想', '分析框架', '推理过程'];
+                const sentences = text.split(/[。！？.!?\n]+/).filter(s => s.trim().length > 5);
+                const count = Math.min(5, Math.max(2, Math.floor(sentences.length / 2)));
+                const ins = [];
+                for (let i = 0; i < count; i++) {
+                    ins.push(templates[i % templates.length].replace('${topic}', '「' + topics[i % topics.length] +
+                        '」'));
+                }
+                return ins;
+            }
+
+            function generateCoreInsight(text) {
+                const len = text.length;
+                if (len < 100)
+                return '文本内容较为简短，其核心观点聚焦于<span class="hl-blue">直接表达的主题思想</span>，建议扩展文本以获得更全面的分析结果。';
+                if (len < 500)
+                return '综合文本分析，核心观点围绕<span class="hl-blue">关键信息的集中表达</span>展开，文本结构清晰，观点指向明确，体现了<span class="hl-blue">逻辑连贯的叙述脉络</span>。';
+                return '全文通过多层次的论述结构，系统性地展开了核心主题。关键观点聚焦于<span class="hl-blue">深度语义理解与信息提炼</span>的有机结合，文本呈现出<span class="hl-blue">清晰的逻辑递进关系</span>，各段落之间相互印证、层层深入，最终汇聚为对主题的全面而深刻的阐释。';
+            }
+
+            // ── 提示词格式化（增强版） ──
+            function formatAsPrompt(input) {
+                const taskType = detectTaskType(input);
+                const lang = detectLang(input);
+                const role = getRole(taskType, lang);
+                const taskDesc = buildTaskDesc(input, taskType);
+                const outputFmt = getOutputFormat(taskType, lang);
+                const constraints = getConstraints(taskType, lang);
+                return `【🎯 角色设定】\n${role}\n\n【📋 任务描述】\n${taskDesc}\n\n【📌 输出格式要求】\n${outputFmt}\n\n【⚠️ 约束与注意事项】\n${constraints}`;
+            }
+
+            function detectLang(text) {
+                const cn = (text.match(/[\u4e00-\u9fff]/g) || []).length;
+                const en = (text.match(/[a-zA-Z]/g) || []).length;
+                return cn > en ? 'zh' : 'en';
+            }
+
+            function detectTaskType(text) {
+                const lower = text.toLowerCase();
+                if (/agent|prompt|架构|系统设计|路由|调度|工作流|模块|适配|可执行目标|输入输出|结构化|qclaw|openclaw|router|orchestrat|编排|任务分派|数字人格|创意agent|hermes|ranivye|核芯|知识库|knowledge.?base|index.?hub|三通道|分流|runtime/i
+                    .test(lower)) return 'system_design';
+                if (/代码|脚本|编程|python|javascript|写.*程序|debug|函数|算法|api|接口|库|框架|npm|pip|git|commit/i.test(
+                    lower)) return 'code';
+                if (/数据|分析|图表|趋势|统计|report|可视化|excel|csv|sql|tableau|指标|kpi/i.test(lower)) return 'data';
+                if (/翻译|translate|本地化|localize|i18n/i.test(lower)) return 'translation';
+                if (/写|文章|博客|文案|总结|概括|内容创作|marketing|seo|广告|宣传/i.test(lower)) return 'writing';
+                if (/评估|分析|审计|诊断|检查|审查|review|audit|评测/i.test(lower)) return 'system_design';
+                return 'general';
+            }
+
+            function getRole(type, lang) {
+                const map = {
+                    system_design: {
+                        zh: '你是一名资深多Agent系统架构师，专精提示词工程、任务编排与系统评估。你擅长将概念设计转化为可执行的工程方案，并精准识别AI系统的能力边界。',
+                        en: 'You are a senior multi-agent system architect specialized in prompt engineering, task orchestration, and system evaluation.'
+                    },
+                    code: {
+                        zh: '你是一名资深软件工程师，擅长编写清晰、可维护、符合最佳实践的代码，注重错误处理与性能优化。',
+                        en: 'You are a senior software engineer skilled in writing clean, maintainable code following best practices.'
+                    },
+                    data: {
+                        zh: '你是一名数据分析专家，精通数据清洗、统计建模与可视化，能够从复杂数据中提取清晰洞察。',
+                        en: 'You are a data analysis expert proficient in data cleaning and visualization.'
+                    },
+                    translation: {
+                        zh: '你是一名专业翻译，精通多语言互译，信达雅兼备，注重术语一致性与文化适配。',
+                        en: 'You are a professional translator with expertise in accurate and fluent translations.'
+                    },
+                    writing: {
+                        zh: '你是一名资深内容创作者，善于组织逻辑清晰、引人入胜的文本，兼顾SEO与读者体验。',
+                        en: 'You are an experienced content writer skilled in crafting well-structured text.'
+                    },
+                    general: {
+                        zh: '你是一名知识渊博的AI助手，能够专业、准确、简洁地回答各类问题。',
+                        en: 'You are a knowledgeable AI assistant capable of providing professional answers.'
+                    },
+                };
+                return map[type]?.[lang] || map['general'][lang];
+            }
+
+            function buildTaskDesc(input, taskType) {
+                if (input.length <= 300) return input.trim();
+                const firstLines = input.split(/\n/).slice(0, 4).join(' ').slice(0, 280);
+                if (taskType === 'system_design')
+                    return '请对以下系统/提示词进行专业评估，诊断其问题，并给出结构化的改进方案。\n\n参考上下文：\n' + firstLines +
+                    '…\n\n请基于以上上下文，完成系统分析与优化建议。';
+                return '请基于以下文本内容进行分析处理：\n\n' + firstLines + '…\n\n（完整文本已提供，请据此执行任务）';
+            }
+
+            function getOutputFormat(type, lang) {
+                const map = {
+                    system_design: {
+                        zh: '请按以下结构输出：\n1) 问题诊断（列出核心问题）\n2) 适配方案（逐条给出改进建议）\n3) 优化后的版本（如适用）\n使用分点或小标题组织内容。',
+                        en: 'Structure your output as:\n1) Problem Diagnosis\n2) Adaptation Plan\n3) Optimized Version'
+                    },
+                    code: { zh: '请直接提供完整可运行代码，使用代码块包裹，添加必要注释。', en: 'Provide complete runnable code in a code block.' },
+                    data: { zh: '请以结构化格式输出分析结果，结论明确。', en: 'Output in structured format with clear conclusions.' },
+                    translation: { zh: '请直接给出翻译后文本，保持格式一致。', en: 'Provide translated text directly.' },
+                    writing: { zh: '请以段落形式输出，结构清晰、语言流畅。', en: 'Output in well-structured paragraphs.' },
+                    general: { zh: '请以简洁专业的语言回答。', en: 'Answer concisely and professionally.' },
+                };
+                return map[type]?.[lang] || map['general'][lang];
+            }
+
+            function getConstraints(type, lang) {
+                const base = lang === 'zh' ? '保持回答简洁、专业，避免冗余信息。' :
+                    'Keep the response concise and professional.';
+                const extra = {
+                    system_design: lang === 'zh' ? '区分系统型与创意型场景，给出可执行的具体建议。避免泛泛而谈。' :
+                        'Distinguish between system-type and creative-type scenarios.',
+                    code: lang === 'zh' ? '代码需遵循最佳实践，包含错误处理。' : 'Code should follow best practices.',
+                    data: lang === 'zh' ? '确保分析严谨，结论明确。' : 'Ensure rigorous analysis.',
+                    translation: lang === 'zh' ? '保持术语一致性。' : 'Maintain term consistency.',
+                    writing: lang === 'zh' ? '避免语法错误，逻辑清晰。' : 'Avoid grammatical errors.',
+                    general: '',
+                };
+                return base + ' ' + (extra[type] || '');
+            }
+
+            // ── 润色函数（增强版） ──
+            function polishText(input) {
+                let text = input;
+                // 1. 常见中文错别字纠正
+                const cnFixes = [
+                    { from: /在(\s*)(做|说|试|改|看|写|运行|开发|部署|用|加|减|乘|除)/g, to: '再$1$2' },
+                    { from: /的的/g, to: '的' },
+                    { from: /了了/g, to: '了' },
+                ];
+                cnFixes.forEach(f => { text = text.replace(f.from, f.to); });
+                // 2. 英文专有名词统一
+                text = text.replace(/\bhermes\b/gi, 'Hermes');
+                text = text.replace(/\bherman\b/gi, 'Hermes');
+                text = text.replace(/\branivye\b/gi, 'Ranivye');
+                text = text.replace(/\bqclaw\b/gi, 'QClaw');
+                // 3. 标点补全
+                text = text.trim();
+                if (text.length > 8 && !/[。！？.!?]$/.test(text)) text += '。';
+                // 4. 中文标点统一
+                text = text.replace(/，/g, '，').replace(/。/g, '。').replace(/！/g, '！').replace(/？/g, '？');
+                text = text.replace(/,,/g, '，').replace(/\.\./g, '。');
+                text = text.replace(/([\u4e00-\u9fff]),\s*/g, '$1，');
+                text = text.replace(/([\u4e00-\u9fff])\.\s*/g, '$1。');
+                // 5. 去除多余空格与换行
+                text = text.replace(/[ ]{2,}/g, ' ').replace(/\n{3,}/g, '\n\n');
+                // 6. 去除口语语气词
+                text = text.replace(/啊(?!啊)/g, '').replace(/吧(?!吧)/g, '').replace(/呢(?!呢)/g, '');
+                text = text.replace(/嘛(?!嘛)/g, '').replace(/哈(?!哈)/g, '').replace(/哦(?!哦)/g, '');
+                // 7. 口语词替换
+                text = text.replace(/很/g, '非常').replace(/一点点/g, '稍许').replace(/乱乱的/g, '杂乱');
+                text = text.replace(/做的/g, '做得').replace(/有点/g, '有些');
+                // 8. 英文首字母大写
+                text = text.replace(/(^|[.!?]\s+)([a-z])/g, (_, p, c) => p + c.toUpperCase());
+                // 9. 常见英文拼写纠正
+                const enCorrections = { 'recieve': 'receive', 'seperate': 'separate', 'definately': 'definitely' };
+                Object.entries(enCorrections).forEach(([w, r]) => {
+                    text = text.replace(new RegExp('\\b' + w + '\\b', 'gi'), r);
+                });
+                // 10. 去除行尾空格
+                text = text.replace(/[ \t]+$/gm, '');
+                return text.trim();
+            }
+
+            // ── 历史记录 ──
+            function getHistory() { try { return JSON.parse(localStorage.getItem('nuclearCoreHistory') || '[]'); } catch (
+                    e) { return []; } }
+
+            function saveHistory(r) {
+                const hist = getHistory();
+                hist.unshift({
+                    time: new Date().toLocaleString('zh-CN', { month: 'numeric', day: 'numeric',
+                        hour: '2-digit', minute: '2-digit' }),
+                    mode: r.mode,
+                    preview: r.text || '',
+                    keywords: r.keywords || [],
+                    keywordsWithWeight: r.keywordsWithWeight || [],
+                    insights: r.insights || [],
+                    coreInsight: r.coreInsight || '',
+                    rawCoreInsightHTML: r.rawCoreInsightHTML || '',
+                    promptText: r.promptText || '',
+                    polishedText: r.polishedText || '',
+                });
+                if (hist.length > 6) hist.length = 6;
+                localStorage.setItem('nuclearCoreHistory', JSON.stringify(hist));
+                renderHistory();
+            }
+
+            function renderHistory() {
+                const hist = getHistory();
+                if (!hist.length) {
+                    historyList.innerHTML = '<div class="hist-empty">暂无提取记录</div>';
+                    return;
+                }
+                historyList.innerHTML = hist.map((h, i) => `
+                    <div class="hist-item" data-idx="${i}">
+                        <div class="time">${h.time} · ${modeLabel(h.mode)}</div>
+                        <div class="preview">${h.preview || (h.keywords||[]).join('、') || '(无预览)'}</div>
+                        <button class="del-btn">×</button>
+                    </div>
+                `).join('');
+                historyList.querySelectorAll('.hist-item').forEach(item => {
+                    item.addEventListener('click', function(e) {
+                        if (e.target.classList.contains('del-btn')) return;
+                        loadHistoryItem(parseInt(this.dataset.idx));
+                    });
+                });
+                historyList.querySelectorAll('.del-btn').forEach(btn => {
+                    btn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        deleteHistoryItem(parseInt(this.parentElement.dataset.idx));
+                    });
+                });
+            }
+
+            function modeLabel(m) {
+                const map = { 'keywords': '核心词', 'insights': '核心观点', 'prompt': '提示词', 'polish': '润色' };
+                return map[m] || m;
+            }
+
+            function loadHistoryItem(idx) {
+                const hist = getHistory();
+                if (!hist[idx]) return;
+                const h = hist[idx];
+                currentMode = h.mode;
+                modeBtns.forEach(b => b.classList.remove('active'));
+                const targetBtn = document.querySelector(`.mode-btn[data-mode="${h.mode}"]`);
+                if (targetBtn) targetBtn.classList.add('active');
+                if (h.mode === 'keywords') {
+                    const kws = (h.keywordsWithWeight || h.keywords || []).map(k => typeof k === 'string' ? { word: k,
+                        weight: 'mid' } : k);
+                    kwTags.innerHTML = kws.map(k =>
+                        `<span class="kw-tag"><span class="wdot ${k.weight||'mid'}"></span>${k.word||k}</span>`
+                    ).join('');
+                } else if (h.mode === 'insights') {
+                    summaryList.innerHTML = (h.insights || []).map((s, i) =>
+                        `<li class="summary-item"><span class="s-num">${i+1}</span><span class="s-text">${s}</span></li>`
+                    ).join('');
+                    coreInsight.innerHTML = h.rawCoreInsightHTML || h.coreInsight || '';
+                } else if (h.mode === 'prompt') {
+                    promptBox.textContent = h.promptText || '';
+                } else if (h.mode === 'polish') {
+                    polishBox.textContent = h.polishedText || '';
+                }
+                lastResult = h;
+                resultsArea.classList.add('visible');
+                updateResultVis();
+                thinkArea.classList.remove('visible');
+                showToast('已加载历史记录');
+            }
+
+            function deleteHistoryItem(idx) {
+                const hist = getHistory();
+                hist.splice(idx, 1);
+                localStorage.setItem('nuclearCoreHistory', JSON.stringify(hist));
+                renderHistory();
+                showToast('已删除');
+            }
+            document.getElementById('clearAllHistory').addEventListener('click', () => {
+                localStorage.removeItem('nuclearCoreHistory');
+                renderHistory();
+                showToast('已清空全部历史');
+            });
+
+            // ── 复制功能 ──
+            async function copyText(text, btn) {
+                try {
+                    await navigator.clipboard.writeText(text);
+                    const origHTML = btn.innerHTML;
+                    btn.classList.add('copied');
+                    btn.innerHTML = '✓ 已复制';
+                    showToast('✓ 已复制到剪贴板');
+                    setTimeout(() => { btn.classList.remove('copied');
+                        btn.innerHTML = origHTML; }, 2000);
+                } catch { showToast('复制失败，请手动选择'); }
+            }
+            document.getElementById('btnCopyMD').addEventListener('click', function() {
+                if (!lastResult) { showToast('暂无结果'); return; }
+                let md = '';
+                if (currentMode === 'keywords') md = '## 🔑 核心词\n\n' + (lastResult.keywords || []).join('、');
+                else if (currentMode === 'insights') md = '## 📋 段落总结\n\n' + (lastResult.insights || []).map((
+                    s, i) => (i + 1) + '. ' + s).join('\n') + '\n\n## 💡 全文核心观点\n\n' + (lastResult
+                    .coreInsight || '');
+                else md = '## 结果\n\n' + (lastResult.text || '');
+                copyText(md, this);
+            });
+            document.getElementById('btnCopyJSON').addEventListener('click', function() {
+                if (!lastResult) { showToast('暂无结果'); return; }
+                copyText(JSON.stringify({ mode: currentMode, text: lastResult.text || '',
+                    keywords: lastResult.keywords || [], insights: lastResult.insights || [],
+                    coreInsight: lastResult.coreInsight || '', promptText: lastResult.promptText || '',
+                    polishedText: lastResult.polishedText || '' }, null, 2), this);
+            });
+            document.getElementById('btnCopyTXT').addEventListener('click', function() {
+                if (!lastResult) { showToast('暂无结果'); return; }
+                let txt = '';
+                if (currentMode === 'keywords') txt = '【核心词】\n' + (lastResult.keywords || []).join('、');
+                else if (currentMode === 'insights') txt = '【段落总结】\n' + (lastResult.insights || []).map((s,
+                    i) => (i + 1) + '. ' + s).join('\n') + '\n\n【全文核心观点】\n' + (lastResult
+                    .coreInsight || '');
+                else if (currentMode === 'prompt') txt = promptBox.textContent;
+                else if (currentMode === 'polish') txt = polishBox.textContent;
+                else txt = lastResult.text || '';
+                copyText(txt, this);
+            });
+            document.getElementById('btnCopyPolished').addEventListener('click', function() {
+                const txt = polishBox.textContent;
+                if (!txt) { showToast('暂无润色结果'); return; }
+                copyText(txt, this);
+            });
+
+            // ── Toast ──
+            function showToast(msg) {
+                toast.textContent = msg;
+                toast.classList.add('show');
+                clearTimeout(toast._t);
+                toast._t = setTimeout(() => toast.classList.remove('show'), 2200);
+            }
+
+            // ── 页脚链接 ──
+            document.getElementById('linkAbout').addEventListener('click', () => showToast(
+                'Ranivye V2-EnhaS · 智能文本核心提取模型 · 本地运行，数据零上传'));
+            document.getElementById('linkPrivacy').addEventListener('click', () => showToast(
+                '隐私声明：所有数据仅在本地设备处理，不会上传至任何服务器。'));
+            document.getElementById('linkHelp').addEventListener('click', () => showToast(
+                '使用帮助：选择模式 → 粘贴文本 → 点击「提取」→ 查看结果。支持核心词/核心观点/提示词格式化/文本润色。Ctrl+Enter 可快速提取。'));
+
+            // ── 快捷键 ──
+            document.addEventListener('keydown', function(e) {
+                if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+                    e.preventDefault();
+                    if (!isProcessing && textInput.value.trim()) btnExtract.click();
+                }
+            });
+
+            // ── 初始化 ──
+            initStatus();
+            updateResultVis();
+            renderHistory();
+            console.log('✅ 核芯摘记 3.5 · Ranivye V2-EnhaS 已就绪');
+            console.log('   WebGPU:', typeof navigator !== 'undefined' && navigator.gpu ? '可用' : '不可用');
+            console.log('   模式: 核心词 | 核心观点 | 提示词格式化 | 文本润色');
+            console.log('   Ctrl+Enter 快速提取');
+        })();
+    </script>
+</body>
+</html>
+```
+
+四大核心处理模式与操作流程
+
+这个工具的核心是将您的文本需求转化为可执行的结果，通过顶部的模式切换按钮，您可以在四种功能间自由切换：
+
+· 🔑 核心词模式：粘贴文本后，工具会提取高频关键词，并用彩色圆点（橙色高/蓝色中/灰色低） 标记权重，帮您快速抓住文本重点。
+· 📋 核心观点模式：自动将长文总结为带编号的段落摘要，并生成一个蓝色高亮的全文核心观点卡片，适合快速理清复杂论述的逻辑。
+· 🧠 提示词模式：这是关键升级点。它会智能识别您输入文本的任务类型（如系统架构设计、代码编写、数据分析等），并自动补全角色、输出格式和约束条件，将您的自然语言需求格式化为一个可直接发给AI执行的结构化提示词。
+· ✨ 润色模式：针对口语化或碎片化的文本，自动修正中英文标点、错别字（如“在”改为“再”）、统一专有名词大小写（如hermes→Hermes），并去除冗余语气词，让表达更专业流畅。
+
+交互与反馈：点击“提取”后，会展示模拟的推理日志和进度条。处理结果支持复制为Markdown/JSON/纯文本。左侧（桌面端可见）的历史面板会自动保存最近6次结果，方便您回溯和对比。
+
+---
+
+优化建议： 页面中的关键词提取、观点生成和润色逻辑均为前端模拟。如需真实AI能力，您可以将extractKeywords、generateInsights、polishText等函数替换为对后端大模型API的调用。

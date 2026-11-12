@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>自建房布局确认 · </title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Inter"', '"SF Pro Display"', '"PingFang SC"', '"Microsoft YaHei"', 'system-ui', '-apple-system', 'sans-serif'],
+            mono: ['"SF Mono"', '"JetBrains Mono"', '"Consolas"', 'monospace'],
+          },
+          colors: {
+            ink: '#1a1a1a',
+            paper: '#fafaf8',
+            muted: '#6b6b65',
+            line: '#e4e3dd',
+            accent: '#5c5a54',
+            warn: '#b8853c',
+            good: '#5a8a6a',
+          },
+          boxShadow: {
+            'card': '0 2px 8px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.03)',
+            'modal': '0 20px 60px rgba(0,0,0,0.18)',
+          },
+          borderRadius: {
+            'card': '14px',
+            'btn': '10px',
+          },
+        }
+      }
+    }
+  </script>
+  <style>
+    :root { --safe-bottom: env(safe-area-inset-bottom, 16px); }
+    * { -webkit-tap-highlight-color: transparent; }
+    body {
+      background: #fafaf8;
+      font-family: 'Inter', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+      padding-bottom: var(--safe-bottom);
+      -webkit-font-smoothing: antialiased;
+    }
+    .blueprint-bg {
+      background-color: #fdfdf9;
+      background-image: 
+        radial-gradient(ellipse at 30% 30%, rgba(180,175,160,0.15) 0%, transparent 60%),
+        radial-gradient(ellipse at 70% 70%, rgba(170,165,150,0.1) 0%, transparent 60%);
+      border: 1px solid #e0dcd2;
+    }
+    .blueprint-bg::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(0deg, transparent, transparent 38px, rgba(150,145,130,0.04) 38px, rgba(150,145,130,0.04) 39px);
+      pointer-events: none;
+      z-index: 1;
+    }
+    .sig-canvas {
+      touch-action: none;
+      background: #fdfdfb;
+      border: 1.5px solid #e4e0d8;
+      border-radius: 8px;
+      cursor: crosshair;
+      position: relative;
+      overflow: hidden;
+    }
+    .sig-canvas canvas {
+      display: block;
+      width: 100%;
+      height: 100px;
+      background: repeating-linear-gradient(0deg, transparent, transparent 32px, #f0ede6 32px, #f0ede6 33px);
+    }
+    .sig-placeholder {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      color: #c5c0b5;
+      font-size: 0.8rem;
+      transition: opacity 0.3s;
+    }
+    .sig-canvas.has-content .sig-placeholder { opacity: 0; }
+    .pill-radio input { position: absolute; opacity: 0; pointer-events: none; }
+    .pill-radio span {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 5px 12px; font-size: 0.75rem; font-weight: 550;
+      border-radius: 20px; border: 1.5px solid #e0dcd2;
+      background: #fff; color: #6b6b65; cursor: pointer;
+      transition: all 0.2s; user-select: none;
+    }
+    .pill-radio input:checked+span.confirm { background: #ecf5ef; border-color: #5a8a6a; color: #3d6149; box-shadow: 0 0 0 2px rgba(90,138,106,0.08); }
+    .pill-radio input:checked+span.revise { background: #fef8f1; border-color: #b8853c; color: #8a5f28; box-shadow: 0 0 0 2px rgba(184,133,60,0.08); }
+    .toast {
+      position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%) translateY(100px);
+      background: #1a1a1a; color: #fff; padding: 10px 20px; border-radius: 24px;
+      font-size: 0.8rem; z-index: 999; pointer-events: none; opacity: 0;
+      transition: all 0.3s ease; box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    @media (max-width: 640px) {
+      .pill-radio span { padding: 4px 10px; font-size: 0.7rem; }
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-paper text-ink antialiased">
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <!-- 主容器 -->
+  <main class="max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-4">
+
+    <!-- Header -->
+    <header class="bg-white rounded-card shadow-card border border-line/60 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-lg flex items-center justify-center text-white font-bold shadow-md">AH</div>
+        <div>
+          <h1 class="text-lg sm:text-xl font-bold tracking-tight">Aunt House · 大姨姐住宅</h1>
+          <p class="text-xs text-muted">双侧12根H型钢柱 · 9ft跨距 · 45ft通道已校准</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-1 rounded-full font-medium">初步审核中</span>
+        <span class="text-xs text-muted/60 hidden sm:inline">版本 PRELIM-01</span>
+      </div>
+    </header>
+
+    <!-- 警告条 -->
+    <div class="bg-amber-50/70 border border-amber-200/60 rounded-card px-4 py-2.5 flex items-center justify-between text-xs text-amber-800">
+      <span class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> 钢柱数量已校准：单侧6根，两侧对称12根。光伏面板仅限通道上方。</span>
+      <span id="tbcCount" class="font-mono font-bold bg-amber-100 px-2 py-0.5 rounded">0项待确认</span>
+    </div>
+
+    <!-- 双列布局：左侧参数面板 + 右侧SVG蓝图 -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+
+      <!-- 左侧：参数控制台 -->
+      <section class="lg:col-span-5 space-y-4">
+        <div class="bg-white rounded-card shadow-card border border-line/60 p-4 sm:p-5 space-y-4">
+          <div class="flex items-center justify-between">
+            <h2 class="text-sm font-semibold uppercase tracking-wider text-muted flex items-center gap-2">📐 尺寸参数台账</h2>
+            <button onclick="resetBaseline()" class="text-xs text-muted hover:text-ink underline underline-offset-2">重置基准</button>
+          </div>
+
+          <!-- 通道参数 -->
+          <div class="border border-line/40 rounded-btn p-3 space-y-2">
+            <span class="text-xs font-semibold flex items-center gap-1">🍳 厨房走廊 (Passage) <span class="text-[0.6rem] bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded">45ft</span></span>
+            <div class="grid grid-cols-2 gap-2">
+              <div class="flex items-center gap-1 bg-paper/80 border border-line/40 rounded px-2.5 py-1.5">
+                <span class="text-[0.65rem] text-muted">宽</span>
+                <input type="number" id="passageWidth" value="335" class="w-full bg-transparent border-0 p-0 text-sm font-mono focus:ring-0" oninput="updateParam('passageWidth', this.value)">
+                <span class="text-[0.65rem] text-muted">cm</span>
+              </div>
+              <div class="flex items-center gap-1 bg-paper/80 border border-line/40 rounded px-2.5 py-1.5">
+                <span class="text-[0.65rem] text-muted">长</span>
+                <input type="number" id="passageLength" value="1372" class="w-full bg-transparent border-0 p-0 text-sm font-mono focus:ring-0" oninput="updateParam('passageLength', this.value)">
+                <span class="text-[0.65rem] text-muted">cm</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 钢柱网格 -->
+          <div class="border border-line/40 rounded-btn p-3 space-y-2">
+            <span class="text-xs font-semibold flex items-center gap-1">🏗️ H型钢柱网格 <span class="text-[0.6rem] bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded">9ft跨距</span></span>
+            <div class="grid grid-cols-2 gap-2">
+              <div class="flex items-center gap-1 bg-paper/80 border border-line/40 rounded px-2.5 py-1.5">
+                <span class="text-[0.65rem] text-muted">间距</span>
+                <input type="number" id="beamSpacing" value="274" class="w-full bg-transparent border-0 p-0 text-sm font-mono focus:ring-0" oninput="updateParam('beamSpacing', this.value)">
+                <span class="text-[0.65rem] text-muted">cm</span>
+              </div>
+              <div class="flex items-center gap-1 bg-paper/80 border border-line/40 rounded px-2.5 py-1.5">
+                <span class="text-[0.65rem] text-muted">柱宽</span>
+                <input type="number" id="beamWidth" value="10" class="w-full bg-transparent border-0 p-0 text-sm font-mono focus:ring-0" oninput="updateParam('beamWidth', this.value)">
+                <span class="text-[0.65rem] text-muted">cm</span>
+              </div>
+            </div>
+            <div class="text-[0.7rem] text-muted/70">总数: <strong class="text-emerald-700">12根</strong> (单侧6根，两侧对称)</div>
+          </div>
+
+          <!-- 房间尺寸 -->
+          <div class="border border-line/40 rounded-btn p-3 space-y-2">
+            <span class="text-xs font-semibold">🛏️ 卧室 / 客厅 / 洗手间</span>
+            <div class="grid grid-cols-2 gap-2 text-[0.7rem]">
+              <div><span class="text-muted">客厅:</span> <input type="number" id="livingWidth" value="380" class="w-14 bg-transparent border-b border-line/30 text-center font-mono" oninput="updateParam('livingWidth', this.value)">×<input type="number" id="livingLength" value="300" class="w-14 bg-transparent border-b border-line/30 text-center font-mono" oninput="updateParam('livingLength', this.value)"> cm</div>
+              <div><span class="text-muted">卧室1:</span> <input type="number" id="room1Width" value="550" class="w-14 bg-transparent border-b border-line/30 text-center font-mono" oninput="updateParam('room1Width', this.value)">×<input type="number" id="room1Length" value="350" class="w-14 bg-transparent border-b border-line/30 text-center font-mono" oninput="updateParam('room1Length', this.value)"> cm</div>
+              <div><span class="text-muted">卧室2:</span> <input type="number" id="room2Width" value="350" class="w-14 bg-transparent border-b border-line/30 text-center font-mono" oninput="updateParam('room2Width', this.value)">×<input type="number" id="room2Length" value="300" class="w-14 bg-transparent border-b border-line/30 text-center font-mono" oninput="updateParam('room2Length', this.value)"> cm</div>
+              <div><span class="text-muted">洗手间2:</span> <input type="number" id="bath2Width" value="150" class="w-14 bg-transparent border-b border-line/30 text-center font-mono" oninput="updateParam('bath2Width', this.value)">×<input type="number" id="bath2Length" value="170" class="w-14 bg-transparent border-b border-line/30 text-center font-mono" oninput="updateParam('bath2Length', this.value)"> cm</div>
+            </div>
+          </div>
+
+          <!-- 锁定状态 -->
+          <div class="flex flex-wrap gap-2 text-xs">
+            <button onclick="toggleConfirm('isLivingConfirmed')" class="px-3 py-1.5 rounded-full border transition" id="lock-living">🔒 客厅未确认</button>
+            <button onclick="toggleConfirm('isRoom1Confirmed')" class="px-3 py-1.5 rounded-full border transition" id="lock-room1">🔒 卧室1未确认</button>
+            <button onclick="toggleConfirm('isRoom2Confirmed')" class="px-3 py-1.5 rounded-full border transition" id="lock-room2">🔒 卧室2未确认</button>
+            <button onclick="toggleConfirm('isPassageConfirmed')" class="px-3 py-1.5 rounded-full border transition bg-emerald-50 border-emerald-300 text-emerald-700" id="lock-passage">✅ 通道已确认</button>
+            <button onclick="toggleConfirm('isBathroomConfirmed')" class="px-3 py-1.5 rounded-full border transition" id="lock-bath">🔒 洗手间未确认</button>
+            <button onclick="toggleConfirm('isBeamConfirmed')" class="px-3 py-1.5 rounded-full border transition bg-emerald-50 border-emerald-300 text-emerald-700" id="lock-beam">✅ 钢柱已确认</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 右侧：2D 蓝图 SVG -->
+      <section class="lg:col-span-7">
+        <div class="bg-white rounded-card shadow-card border border-line/60 p-3 sm:p-4">
+          <div class="flex items-center justify-between mb-3">
+            <h2 class="text-xs font-semibold uppercase tracking-wider text-muted flex items-center gap-2">📐 实时矢量平面图</h2>
+            <div class="flex gap-2 text-[0.65rem]">
+              <label class="flex items-center gap-1"><input type="checkbox" id="showGrid" checked onchange="renderSVG()" class="rounded"> 网格</label>
+              <label class="flex items-center gap-1"><input type="checkbox" id="showRoof" onchange="renderSVG()" class="rounded"> 钢梁</label>
+            </div>
+          </div>
+          <div class="blueprint-bg rounded-lg relative overflow-hidden aspect-[3/4] sm:aspect-[4/5]">
+            <svg id="layoutSvg" viewBox="0 0 850 1100" class="w-full h-full relative z-[2]"></svg>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- 底部：客户确认区 -->
+    <section class="bg-white rounded-card shadow-card border border-line/60 p-4 sm:p-5 space-y-4">
+      <h2 class="text-sm font-semibold uppercase tracking-wider text-muted flex items-center gap-2">✍️ 客户签署</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="text-[0.7rem] uppercase text-muted/70">客户签名</label>
+          <input type="text" placeholder="打印姓名" class="w-full mt-1 border border-line/40 rounded-btn px-3 py-2 text-sm" id="clientSigName">
+          <div class="sig-canvas mt-2" id="sigClientWrap">
+            <canvas id="sigClientCanvas" width="400" height="110"></canvas>
+            <span class="sig-placeholder">✍️ 手指书写签名</span>
+          </div>
+          <button onclick="clearSig('client')" class="text-xs text-muted underline mt-1">清除</button>
+          <input type="date" value="2026-05-22" class="w-full mt-2 border border-line/40 rounded-btn px-3 py-2 text-sm" id="sigDateClient">
+        </div>
+        <div>
+          <label class="text-[0.7rem] uppercase text-muted/70">设计师签名</label>
+          <input type="text" placeholder="打印姓名" class="w-full mt-1 border border-line/40 rounded-btn px-3 py-2 text-sm" id="sigDesignerName">
+          <div class="sig-canvas mt-2" id="sigDesignerWrap">
+            <canvas id="sigDesignerCanvas" width="400" height="110"></canvas>
+            <span class="sig-placeholder">✍️ 手指书写签名</span>
+          </div>
+          <button onclick="clearSig('designer')" class="text-xs text-muted underline mt-1">清除</button>
+          <input type="date" value="2026-05-22" class="w-full mt-2 border border-line/40 rounded-btn px-3 py-2 text-sm" id="sigDateDesigner">
+        </div>
+      </div>
+      <button onclick="submitReview()" class="w-full py-3 bg-ink text-white font-semibold rounded-btn shadow-md hover:bg-[#2a2a2a] active:scale-[0.98] transition flex items-center justify-center gap-2">
+        ✅ 提交审核
+      </button>
+    </section>
+
+    <footer class="text-center text-[0.65rem] text-muted/50 py-4">
+      初步设计审核 · 非最终施工图纸 · © 2026 LHB Design Support
+    </footer>
+  </main>
+
+  <script>
+    // ── 状态管理 ──
+    const state = {
+      passageWidth: 335, passageLength: 1372,
+      livingWidth: 380, livingLength: 300,
+      room1Width: 550, room1Length: 350,
+      room2Width: 350, room2Length: 300,
+      bath2Width: 150, bath2Length: 170,
+      beamSpacing: 274, beamWidth: 10,
+      isLivingConfirmed: false, isRoom1Confirmed: false, isRoom2Confirmed: false,
+      isPassageConfirmed: true, isBathroomConfirmed: false, isBeamConfirmed: true,
+    };
+
+    // 更新参数
+    window.updateParam = (key, val) => {
+      state[key] = Number(val) || 0;
+      renderSVG();
+      updateLockButtons();
+      countTBC();
+    };
+
+    // 切换确认状态
+    window.toggleConfirm = (key) => {
+      state[key] = !state[key];
+      updateLockButtons();
+      countTBC();
+      renderSVG();
+      showToast('状态已更新');
+    };
+
+    function updateLockButtons() {
+      const map = {
+        isLivingConfirmed: 'lock-living', isRoom1Confirmed: 'lock-room1', isRoom2Confirmed: 'lock-room2',
+        isPassageConfirmed: 'lock-passage', isBathroomConfirmed: 'lock-bath', isBeamConfirmed: 'lock-beam'
+      };
+      Object.entries(map).forEach(([key, id]) => {
+        const btn = document.getElementById(id);
+        if (!btn) return;
+        const confirmed = state[key];
+        btn.textContent = confirmed ? '✅ ' + id.replace('lock-','') + '已确认' : '🔒 ' + id.replace('lock-','') + '未确认';
+        btn.className = confirmed 
+          ? 'px-3 py-1.5 rounded-full border transition bg-emerald-50 border-emerald-300 text-emerald-700 text-xs'
+          : 'px-3 py-1.5 rounded-full border transition bg-white border-line/40 text-muted text-xs';
+      });
+    }
+
+    function countTBC() {
+      const tbc = [!state.isLivingConfirmed, !state.isRoom1Confirmed, !state.isRoom2Confirmed, !state.isPassageConfirmed, !state.isBathroomConfirmed, !state.isBeamConfirmed].filter(v=>v).length;
+      document.getElementById('tbcCount').textContent = tbc + '项待确认';
+    }
+
+    // ── SVG 渲染 ──
+    function renderSVG() {
+      const svg = document.getElementById('layoutSvg');
+      const scale = 0.42;
+      const leftMargin = 120;
+      const showGrid = document.getElementById('showGrid')?.checked ?? true;
+      const showRoof = document.getElementById('showRoof')?.checked ?? false;
+
+      // 几何计算 (最新拓扑：厨房走廊在左，客厅居中，卧室1+洗手间1上方，卧室2右侧，洗手间2背靠背)
+      const kp = { x: leftMargin, y: 150*scale, w: state.passageWidth*scale, h: state.passageLength*scale };
+      const r1 = { x: kp.x + kp.w, y: kp.y + 150*scale, w: state.room1Width*scale, h: state.room1Length*scale };
+      const bath1 = { x: r1.x + r1.w, y: r1.y, w: 180*scale, h: state.room1Length*scale };
+      const liv = { x: kp.x + kp.w, y: r1.y + r1.h, w: state.livingWidth*scale, h: state.livingLength*scale };
+      const r2 = { x: liv.x + liv.w, y: liv.y, w: state.room2Width*scale, h: state.room2Length*scale };
+      const bath2 = { x: r2.x + r2.w - state.bath2Width*scale, y: r2.y, w: state.bath2Width*scale, h: state.bath2Length*scale };
+      const backyard = { x: kp.x, y: kp.y, w: kp.w, h: 150*scale };
+      const frontyard = { x: liv.x, y: liv.y + liv.h, w: liv.w, h: 150*scale };
+
+      // 钢柱位置 (两侧各6根，间距274cm)
+      const beams = [];
+      const beamYStart = kp.y;
+      const beamStep = state.beamSpacing * scale;
+      for (let i = 0; i < 6; i++) {
+        beams.push({ id: `H${i+1}`, x: kp.x, y: beamYStart + i*beamStep });
+        beams.push({ id: `H${12-i}`, x: kp.x + kp.w, y: beamYStart + i*beamStep });
+      }
+
+      // 生成 SVG 内容
+      let html = '';
+      if (showGrid) html += `<rect width="100%" height="100%" fill="url(#gridPattern)" />`;
+      // 网格定义
+      html += `<defs><pattern id="gridPattern" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M 40 0 L 0 0 0 40" fill="none" stroke="#e0dcd2" stroke-width="0.5"/></pattern></defs>`;
+      
+      // 外框
+      html += `<rect x="40" y="40" width="770" height="1020" fill="none" stroke="#c0bdb2" stroke-width="1.5" stroke-dasharray="8,8" />`;
+      
+      // 厨房走廊
+      html += `<rect x="${kp.x}" y="${kp.y}" width="${kp.w}" height="${kp.h}" fill="none" stroke="${state.isPassageConfirmed ? '#10b981' : '#f59e0b'}" stroke-width="3" stroke-dasharray="6,4" />`;
+      html += `<text x="${kp.x+10}" y="${kp.y+35}" fill="${state.isPassageConfirmed ? '#059669' : '#b45309'}" font-size="14" font-weight="bold">厨房走廊</text>`;
+      html += `<text x="${kp.x+10}" y="${kp.y+60}" fill="#6b6b65" font-size="11" font-family="monospace">${state.passageWidth}x${state.passageLength} cm</text>`;
+
+      // 客厅
+      html += `<rect x="${liv.x}" y="${liv.y}" width="${liv.w}" height="${liv.h}" fill="#fafaf5" stroke="${state.isLivingConfirmed ? '#10b981' : '#f59e0b'}" stroke-width="2.5" />`;
+      html += `<text x="${liv.x+10}" y="${liv.y+30}" fill="#1a1a1a" font-size="15" font-weight="bold">客厅 Living</text>`;
+      html += `<text x="${liv.x+10}" y="${liv.y+55}" fill="#6b6b65" font-size="12" font-family="monospace">${state.livingWidth}x${state.livingLength} cm</text>`;
+
+      // 卧室2
+      html += `<rect x="${r2.x}" y="${r2.y}" width="${r2.w}" height="${r2.h}" fill="#fafaf5" stroke="${state.isRoom2Confirmed ? '#10b981' : '#f59e0b'}" stroke-width="2.5" />`;
+      html += `<text x="${r2.x+10}" y="${r2.y+30}" fill="#1a1a1a" font-size="15" font-weight="bold">卧室2</text>`;
+      html += `<text x="${r2.x+10}" y="${r2.y+55}" fill="#6b6b65" font-size="12" font-family="monospace">${state.room2Width}x${state.room2Length} cm</text>`;
+
+      // 卧室1 (长条套间)
+      html += `<rect x="${r1.x}" y="${r1.y}" width="${r1.w}" height="${r1.h}" fill="#fafaf5" stroke="${state.isRoom1Confirmed ? '#10b981' : '#f59e0b'}" stroke-width="2.5" />`;
+      html += `<text x="${r1.x+10}" y="${r1.y+30}" fill="#1a1a1a" font-size="15" font-weight="bold">卧室1 (套间)</text>`;
+      html += `<text x="${r1.x+10}" y="${r1.y+55}" fill="#6b6b65" font-size="12" font-family="monospace">${state.room1Width}x${state.room1Length} cm</text>`;
+
+      // 洗手间1
+      html += `<rect x="${bath1.x}" y="${bath1.y}" width="${bath1.w}" height="${bath1.h}" fill="none" stroke="#ef4444" stroke-width="2" />`;
+      html += `<text x="${bath1.x+5}" y="${bath1.y+30}" fill="#ef4444" font-size="12" font-weight="bold">洗手间1</text>`;
+
+      // 洗手间2 (背靠背)
+      html += `<rect x="${bath2.x}" y="${bath2.y}" width="${bath2.w}" height="${bath2.h}" fill="#fef2f2" stroke="${state.isBathroomConfirmed ? '#10b981' : '#ef4444'}" stroke-width="2" />`;
+      html += `<text x="${bath2.x+5}" y="${bath2.y+25}" fill="#ef4444" font-size="12" font-weight="bold">洗手间2</text>`;
+      html += `<text x="${bath2.x+5}" y="${bath2.y+45}" fill="#6b6b65" font-size="10" font-family="monospace">${state.bath2Width}x${state.bath2Length}</text>`;
+
+      // 后院 / 前院
+      html += `<rect x="${backyard.x}" y="${backyard.y}" width="${backyard.w}" height="${backyard.h}" fill="none" stroke="#fbbf24" stroke-width="1.5" stroke-dasharray="4,4" />`;
+      html += `<text x="${backyard.x+15}" y="${backyard.y+30}" fill="#b45309" font-size="12">后院采光</text>`;
+      html += `<rect x="${frontyard.x}" y="${frontyard.y}" width="${frontyard.w}" height="${frontyard.h}" fill="none" stroke="#38bdf8" stroke-width="1.5" stroke-dasharray="4,4" />`;
+      html += `<text x="${frontyard.x+15}" y="${frontyard.y+30}" fill="#0284c7" font-size="12">前院入口</text>`;
+
+      // 钢柱标记 (红色圆点)
+      beams.forEach(b => {
+        html += `<circle cx="${b.x}" cy="${b.y}" r="${state.beamWidth*0.8}" fill="#ef4444" stroke="#b91c1c" stroke-width="1" />`;
+        html += `<text x="${b.x+5}" y="${b.y-4}" fill="#b91c1c" font-size="8" font-family="monospace">${b.id}</text>`;
+      });
+
+      // 电箱标记
+      const dbX = kp.x + 15, dbY = beamYStart + 2.5 * beamStep;
+      html += `<rect x="${dbX}" y="${dbY}" width="20" height="20" fill="#3b82f6" rx="3" />`;
+      html += `<text x="${dbX+25}" y="${dbY+14}" fill="#1e3a8a" font-size="9" font-weight="bold">DB</text>`;
+
+      svg.innerHTML = html;
+    }
+
+    // ── 签名系统 ──
+    const sigs = { client: null, designer: null };
+    function initSig(which) {
+      const canvas = document.getElementById(`sig${which === 'client' ? 'Client' : 'Designer'}Canvas`);
+      const wrap = document.getElementById(`sig${which === 'client' ? 'Client' : 'Designer'}Wrap`);
+      const ctx = canvas.getContext('2d');
+      const stateObj = { ctx, canvas, wrap, drawing: false, points: [], hasContent: false };
+      sigs[which] = stateObj;
+
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = canvas.offsetWidth * dpr;
+      canvas.height = canvas.offsetHeight * dpr;
+      ctx.setTransform(1,0,0,1,0,0);
+      ctx.scale(dpr, dpr);
+      ctx.lineWidth = 2.5;
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = '#1a1a1a';
+
+      function getPos(e) {
+        const rect = canvas.getBoundingClientRect();
+        return {
+          x: (e.touches ? e.touches[0].clientX : e.clientX) - rect.left,
+          y: (e.touches ? e.touches[0].clientY : e.clientY) - rect.top
+        };
+      }
+
+      function start(e) { e.preventDefault(); stateObj.drawing = true; const p = getPos(e); stateObj.points = [p]; ctx.clearRect(0,0,canvas.width/dpr,canvas.height/dpr); ctx.beginPath(); ctx.moveTo(p.x,p.y); }
+      function move(e) { if (!stateObj.drawing) return; e.preventDefault(); const p = getPos(e); stateObj.points.push(p); ctx.lineTo(p.x,p.y); ctx.stroke(); }
+      function end() { if (!stateObj.drawing) return; stateObj.drawing = false; ctx.closePath(); if (stateObj.points.length > 3) { stateObj.hasContent = true; wrap.classList.add('has-content'); } }
+      canvas.addEventListener('mousedown', start);
+      canvas.addEventListener('mousemove', move);
+      canvas.addEventListener('mouseup', end);
+      canvas.addEventListener('mouseleave', end);
+      canvas.addEventListener('touchstart', start, {passive: false});
+      canvas.addEventListener('touchmove', move, {passive: false});
+      canvas.addEventListener('touchend', end);
+      canvas.addEventListener('touchcancel', end);
+    }
+    window.clearSig = (which) => {
+      const s = sigs[which];
+      if (!s) return;
+      const dpr = Math.min(window.devicePixelRatio||1,2);
+      s.ctx.clearRect(0,0,s.canvas.width/dpr,s.canvas.height/dpr);
+      s.points = []; s.hasContent = false; s.wrap.classList.remove('has-content');
+    };
+    initSig('client'); initSig('designer');
+
+    // ── 提交 ──
+    window.submitReview = () => {
+      if (!document.getElementById('clientSigName').value.trim()) return showToast('请输入客户签名姓名');
+      if (!sigs.client.hasContent) return showToast('请提供客户手写签名');
+      showToast('✅ 审核已提交！');
+    };
+
+    // ── 重置 ──
+    window.resetBaseline = () => {
+      state.passageWidth=335; state.passageLength=1372; state.beamSpacing=274; state.beamWidth=10;
+      state.livingWidth=380; state.livingLength=300; state.room1Width=550; state.room1Length=350;
+      state.room2Width=350; state.room2Length=300; state.bath2Width=150; state.bath2Length=170;
+      document.getElementById('passageWidth').value=335; document.getElementById('passageLength').value=1372;
+      document.getElementById('beamSpacing').value=274; document.getElementById('beamWidth').value=10;
+      document.getElementById('livingWidth').value=380; document.getElementById('livingLength').value=300;
+      document.getElementById('room1Width').value=550; document.getElementById('room1Length').value=350;
+      document.getElementById('room2Width').value=350; document.getElementById('room2Length').value=300;
+      document.getElementById('bath2Width').value=150; document.getElementById('bath2Length').value=170;
+      renderSVG(); updateLockButtons(); countTBC(); showToast('已重置为基准值');
+    };
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg; t.classList.add('show');
+      clearTimeout(t._timer); t._timer = setTimeout(() => t.classList.remove('show'), 2000);
+    }
+
+    // 初始化
+    renderSVG();
+    updateLockButtons();
+    countTBC();
+  </script>
+</body>
+</html>

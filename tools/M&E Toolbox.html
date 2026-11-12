@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>建筑 & M&E AI Prompt Toolbox · 追问小贴士</title>
+    <style>
+        :root {
+            --bg: #f5f5f7;
+            --surface: #ffffff;
+            --surface2: #f0f0f2;
+            --text: #1a1a2e;
+            --text2: #555;
+            --text3: #888;
+            --primary: #1a73e8;
+            --primary-light: #e8f0fe;
+            --accent-arch: #f97316;
+            --accent-elec: #eab308;
+            --accent-plumb: #06b6d4;
+            --accent-hvac: #3b82f6;
+            --accent-boq: #8b5cf6;
+            --accent-cost: #10b981;
+            --accent-constr: #ef4444;
+            --accent-qa: #14b8a6;
+            --border: #e0e0e4;
+            --shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+            --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.10);
+            --radius: 16px;
+            --radius-sm: 10px;
+            --radius-xs: 8px;
+            --nav-height: 64px;
+            --header-height: 52px;
+            --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            --font-mono: 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
+        }
+        .dark {
+            --bg: #12121a;
+            --surface: #1c1c28;
+            --surface2: #252535;
+            --text: #e8e8f0;
+            --text2: #b0b0bb;
+            --text3: #777788;
+            --primary: #5b9cf5;
+            --primary-light: #1e2a3d;
+            --border: #2a2a38;
+            --shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+            --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.4);
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        html {
+            font-size: 15px;
+            scroll-behavior: smooth;
+            height: 100%;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            min-height: 100dvh;
+            max-width: 500px;
+            margin: 0 auto;
+            position: relative;
+            overflow-x: hidden;
+            line-height: 1.5;
+            transition: background var(--transition), color var(--transition);
+            padding-bottom: calc(var(--nav-height) + 20px);
+            -webkit-font-smoothing: antialiased;
+        }
+        .app-header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: var(--surface);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border);
+            height: var(--header-height);
+            transition: background var(--transition), border var(--transition);
+        }
+        .app-title {
+            font-weight: 700;
+            font-size: 1.1rem;
+            letter-spacing: -0.3px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .app-title .icon {
+            font-size: 1.4rem;
+        }
+        .theme-toggle {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            border: 1px solid var(--border);
+            background: var(--surface2);
+            cursor: pointer;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all var(--transition);
+            color: var(--text);
+        }
+        .theme-toggle:active {
+            scale: 0.92;
+            background: var(--border);
+        }
+        .view {
+            display: none;
+            padding: 12px 14px;
+            animation: fadeSlideIn 0.25s ease;
+        }
+        .view.active {
+            display: block;
+        }
+        @keyframes fadeSlideIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 500px;
+            background: var(--surface);
+            border-top: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            padding: 6px 4px;
+            padding-bottom: max(6px, env(safe-area-inset-bottom));
+            height: var(--nav-height);
+            z-index: 100;
+            transition: background var(--transition), border var(--transition);
+            box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.04);
+        }
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+            cursor: pointer;
+            padding: 6px 10px;
+            border-radius: 12px;
+            transition: all var(--transition);
+            font-size: 0.7rem;
+            color: var(--text3);
+            font-weight: 500;
+            min-width: 52px;
+            position: relative;
+        }
+        .nav-item .nav-icon { font-size: 1.35rem; transition: all var(--transition); }
+        .nav-item.active { color: var(--primary); font-weight: 600; }
+        .nav-item.active .nav-icon { transform: translateY(-2px); }
+        .nav-item:active { scale: 0.9; }
+        .nav-badge {
+            position: absolute; top: 2px; right: 6px;
+            background: #ef4444; color: #fff; font-size: 0.6rem;
+            width: 16px; height: 16px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; display: none;
+        }
+        .nav-badge.show { display: flex; }
+        .card {
+            background: var(--surface); border-radius: var(--radius);
+            padding: 16px; margin-bottom: 10px;
+            box-shadow: var(--shadow); border: 1px solid var(--border);
+            transition: all var(--transition); cursor: pointer; position: relative; overflow: hidden;
+        }
+        .card:active { scale: 0.985; box-shadow: var(--shadow-lg); }
+        .card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+        .card-icon {
+            width: 40px; height: 40px; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center; font-size: 1.3rem; flex-shrink: 0;
+        }
+        .card-title { font-weight: 600; font-size: 0.95rem; letter-spacing: -0.2px; }
+        .card-subtitle { font-size: 0.75rem; color: var(--text2); margin-top: 1px; }
+        .card-arrow { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); color: var(--text3); font-size: 1.2rem; }
+        .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .dash-card {
+            background: var(--surface); border-radius: var(--radius); padding: 14px 12px;
+            box-shadow: var(--shadow); border: 1px solid var(--border);
+            cursor: pointer; transition: all var(--transition); text-align: center;
+            display: flex; flex-direction: column; align-items: center; gap: 6px; position: relative;
+        }
+        .dash-card:active { scale: 0.95; box-shadow: var(--shadow-lg); }
+        .dash-card .dash-icon { font-size: 2rem; width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center; }
+        .dash-card .dash-label { font-weight: 600; font-size: 0.8rem; letter-spacing: -0.2px; }
+        .dash-card .dash-count { font-size: 0.65rem; color: var(--text3); }
+        .section-title { font-weight: 700; font-size: 1rem; margin: 14px 0 8px; letter-spacing: -0.3px; display: flex; align-items: center; gap: 6px; }
+        .prompt-item {
+            background: var(--surface); border-radius: var(--radius-sm); padding: 14px;
+            margin-bottom: 8px; border: 1px solid var(--border);
+            transition: all var(--transition); cursor: pointer; position: relative; box-shadow: var(--shadow);
+        }
+        .prompt-item:active { scale: 0.985; }
+        .prompt-item .prompt-title { font-weight: 600; font-size: 0.9rem; display: flex; align-items: center; gap: 8px; }
+        .prompt-item .prompt-preview {
+            font-size: 0.75rem; color: var(--text2); margin-top: 4px; line-height: 1.4;
+            display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+            font-family: var(--font-mono); background: var(--surface2); padding: 8px 10px;
+            border-radius: 6px; margin-top: 8px; user-select: text; -webkit-user-select: text;
+        }
+        .prompt-actions { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+        .btn {
+            padding: 8px 14px; border-radius: 20px; border: 1px solid var(--border);
+            background: var(--surface2); cursor: pointer; font-size: 0.75rem; font-weight: 500;
+            transition: all var(--transition); display: flex; align-items: center; gap: 5px;
+            white-space: nowrap; color: var(--text); font-family: inherit;
+        }
+        .btn:active { scale: 0.93; opacity: 0.8; }
+        .btn.primary { background: var(--primary); color: #fff; border: none; font-weight: 600; }
+        .btn.saved { background: #fef3c7; border-color: #f59e0b; color: #92400e; }
+        .dark .btn.saved { background: #3d2e0a; border-color: #b45309; color: #fcd34d; }
+        .btn-sm { padding: 5px 10px; font-size: 0.7rem; border-radius: 14px; }
+        .btn-follow {
+            background: #ede9fe; border-color: #a78bfa; color: #5b21b6;
+            display: flex; align-items: center; gap: 4px;
+        }
+        .dark .btn-follow { background: #2e1a4a; border-color: #7c3aed; color: #c4b5fd; }
+        .followup-area {
+            margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border);
+            display: none; flex-direction: column; gap: 8px;
+        }
+        .followup-area.show { display: flex; }
+        .followup-item {
+            font-size: 0.75rem; background: var(--surface2); padding: 8px 10px;
+            border-radius: 8px; cursor: pointer; transition: all var(--transition);
+            display: flex; align-items: center; justify-content: space-between;
+            user-select: text; -webkit-user-select: text;
+        }
+        .followup-item:active { background: var(--border); }
+        .followup-copy-icon { font-size: 0.9rem; opacity: 0.7; margin-left: 6px; }
+        .search-bar { display: flex; gap: 8px; margin-bottom: 12px; position: sticky; top: var(--header-height); z-index: 50; background: var(--bg); padding: 8px 0; }
+        .search-input {
+            flex: 1; padding: 10px 16px; border-radius: 24px; border: 1.5px solid var(--border);
+            background: var(--surface); font-size: 0.9rem; outline: none; transition: all var(--transition);
+            color: var(--text); font-family: inherit; user-select: text; -webkit-user-select: text; min-width: 0;
+        }
+        .search-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
+        .platform-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+        .chip {
+            padding: 6px 12px; border-radius: 18px; border: 1.5px solid var(--border);
+            cursor: pointer; font-size: 0.7rem; font-weight: 500; transition: all var(--transition);
+            background: var(--surface); white-space: nowrap; color: var(--text2);
+        }
+        .chip.active { background: var(--primary); color: #fff; border-color: var(--primary); font-weight: 600; }
+        .chip:active { scale: 0.93; }
+        .collapse-header {
+            display: flex; align-items: center; justify-content: space-between; padding: 12px 14px;
+            background: var(--surface); border-radius: var(--radius-sm); cursor: pointer; font-weight: 600;
+            font-size: 0.9rem; border: 1px solid var(--border); margin-bottom: 4px; transition: all var(--transition); user-select: none;
+        }
+        .collapse-header:active { background: var(--surface2); }
+        .collapse-content { max-height: 0; overflow: hidden; transition: max-height 0.35s ease; padding: 0 4px; }
+        .collapse-content.open { max-height: 2000px; }
+        .collapse-arrow { transition: transform 0.3s ease; font-size: 0.8rem; color: var(--text3); }
+        .collapse-header.open .collapse-arrow { transform: rotate(180deg); }
+        .qa-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--radius-xs); cursor: pointer; transition: all var(--transition); font-size: 0.85rem; font-weight: 500; border: 1px solid transparent; }
+        .qa-item:active { background: var(--surface2); }
+        .qa-checkbox { width: 22px; height: 22px; border-radius: 6px; border: 2px solid var(--border); flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: all var(--transition); font-size: 0.7rem; color: transparent; }
+        .qa-item.checked .qa-checkbox { background: #10b981; border-color: #10b981; color: #fff; }
+        .qa-item.checked .qa-label { text-decoration: line-through; color: var(--text3); }
+        .form-group { margin-bottom: 10px; }
+        .form-label { font-size: 0.7rem; font-weight: 600; color: var(--text2); margin-bottom: 4px; display: block; text-transform: uppercase; letter-spacing: 0.5px; }
+        .form-input { width: 100%; padding: 10px 14px; border-radius: var(--radius-xs); border: 1.5px solid var(--border); background: var(--surface); font-size: 0.85rem; outline: none; transition: all var(--transition); color: var(--text); font-family: inherit; user-select: text; -webkit-user-select: text; }
+        .form-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
+        .toast {
+            position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%) translateY(20px);
+            background: #1a1a2e; color: #fff; padding: 10px 20px; border-radius: 24px;
+            font-size: 0.8rem; font-weight: 500; z-index: 200; opacity: 0; pointer-events: none;
+            transition: all 0.3s ease; white-space: nowrap; box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+        }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+        .dark .toast { background: #e8e8f0; color: #1a1a2e; }
+        .accent-arch { background: #fff7ed; color: #c2410c; } .dark .accent-arch { background: #2d1a0a; color: #fb923c; }
+        .accent-elec { background: #fefce8; color: #a16207; } .dark .accent-elec { background: #2d2506; color: #facc15; }
+        .accent-plumb { background: #ecfeff; color: #0e7490; } .dark .accent-plumb { background: #0a2025; color: #22d3ee; }
+        .accent-hvac { background: #eff6ff; color: #1d4ed8; } .dark .accent-hvac { background: #0a1628; color: #60a5fa; }
+        .accent-boq { background: #f5f3ff; color: #6d28d9; } .dark .accent-boq { background: #1a0f2e; color: #a78bfa; }
+        .accent-cost { background: #ecfdf5; color: #047857; } .dark .accent-cost { background: #0a1f18; color: #34d399; }
+        .accent-constr { background: #fef2f2; color: #b91c1c; } .dark .accent-constr { background: #2d0a0a; color: #f87171; }
+        .accent-qa { background: #f0fdfa; color: #0f766e; } .dark .accent-qa { background: #0a1f1c; color: #2dd4bf; }
+    </style>
+</head>
+<body>
+    <header class="app-header">
+        <div class="app-title"><span class="icon">🏗️</span> M&E Toolbox</div>
+        <button class="theme-toggle" id="themeToggle" aria-label="切换主题">🌙</button>
+    </header>
+    <div class="toast" id="toast"></div>
+    <div class="view active" id="view-dashboard"></div>
+    <div class="view" id="view-categories"></div>
+    <div class="view" id="view-editor"></div>
+    <div class="view" id="view-saved"></div>
+    <div class="view" id="view-settings"></div>
+    <nav class="bottom-nav">
+        <div class="nav-item active" data-view="dashboard"><span class="nav-icon">🏠</span>首页</div>
+        <div class="nav-item" data-view="categories"><span class="nav-icon">📂</span>分类</div>
+        <div class="nav-item" data-view="editor"><span class="nav-icon">✏️</span>编辑器</div>
+        <div class="nav-item" data-view="saved"><span class="nav-icon">⭐</span>收藏<span class="nav-badge" id="savedBadge">0</span></div>
+        <div class="nav-item" data-view="settings"><span class="nav-icon">⚙️</span>设置</div>
+    </nav>
+    <script>
+        (function() {
+            // ────────── DATA ──────────
+            const categoryMeta = {
+                arch: { name: '🏠 建筑设计', icon: '🏠', accent: 'accent-arch' },
+                elec: { name: '⚡ 电气设计', icon: '⚡', accent: 'accent-elec' },
+                plumb: { name: '💧 给排水', icon: '💧', accent: 'accent-plumb' },
+                hvac: { name: '❄️ 空调 HVAC', icon: '❄️', accent: 'accent-hvac' },
+                boq: { name: '📊 BOQ', icon: '📊', accent: 'accent-boq' },
+                cost: { name: '💰 成本分析', icon: '💰', accent: 'accent-cost' },
+                constr: { name: '🚧 施工 Review', icon: '🚧', accent: 'accent-constr' },
+                qa: { name: '✅ Final QA', icon: '✅', accent: 'accent-qa' },
+            };
+            const promptsData = {
+                arch: [
+                    { id: 'arch-1', title: '空间优化分析', text: '请分析以下建筑平面图的空间利用效率，提出优化建议，重点关注：1) 走廊面积占比 2) 功能分区合理性 3) 死角空间利用。请以结构化方式输出。' },
+                    { id: 'arch-2', title: '动线分析', text: '对该建筑进行人流动线分析，包括：主要流线、次要流线、紧急疏散路线。指出潜在瓶颈点，并提供优化方案。请考虑无障碍通行需求。' },
+                    { id: 'arch-3', title: '湿区检查', text: '检查所有湿区（卫生间、厨房、洗衣房）的防水设计、坡度、排水点位。确认是否有足够检修口，管道井尺寸是否合理。列出潜在渗漏风险点。' },
+                    { id: 'arch-4', title: '楼梯合规检查', text: '根据建筑规范检查楼梯设计：踏步高度/宽度比例、扶手高度、平台深度、防火楼梯宽度。确认满足疏散要求。' },
+                    { id: 'arch-5', title: '自然通风与采光', text: '评估建筑的自然通风和采光条件。检查窗地比是否满足规范，是否有暗房间，是否需要增加采光井或通风口。' },
+                    { id: 'arch-6', title: '家具布置优化', text: '根据房间尺寸和功能需求，优化家具布置方案。考虑人体工程学尺度、活动空间、储物需求。提供多种布局选项。' },
+                    { id: 'arch-7', title: '无障碍设计检查', text: '全面检查无障碍设计：入口坡道、电梯尺寸、卫生间无障碍设施、走廊宽度、盲道设置、标识系统。' },
+                ],
+                elec: [
+                    { id: 'elec-1', title: '灯光设计优化', text: '根据空间功能和照度标准，优化灯光布局。包括：灯具选型、照度计算、色温选择、智能控制分区。请提供节能方案。' },
+                    { id: 'elec-2', title: '插座布局检查', text: '检查插座布局是否满足功能需求：间距、高度、类型（普通/防水/专用）。确认厨房、卫生间等特殊区域的插座配置。' },
+                    { id: 'elec-3', title: 'DB配电箱Review', text: '审查配电箱设计：回路分配合理性、备用回路预留、母排规格、箱体尺寸及安装位置。确认符合当地电气规范。' },
+                    { id: 'elec-4', title: 'MCB配置检查', text: '检查各回路MCB额定电流选型是否匹配负载，确认短路保护配合。列出可能过载的回路。' },
+                    { id: 'elec-5', title: 'RCCB漏电保护', text: '确认漏电保护配置：RCCB额定漏电动作电流（30mA/100mA/300mA）、安装位置、保护范围。检查是否存在保护盲区。' },
+                    { id: 'elec-6', title: 'SPD防雷设计', text: '检查浪涌保护器配置：Type 1/2/3的级联配合、安装位置、接地连接。确认符合防雷分区要求。' },
+                    { id: 'elec-7', title: '接地系统设计', text: '审查接地系统：接地极类型、接地电阻要求、等电位联结、接地线规格。确认TN-S/TT系统配置正确。' },
+                    { id: 'elec-8', title: '电缆尺寸计算', text: '根据负载电流、敷设方式、环境温度、电压降要求，计算各回路电缆截面。提供详细计算过程。' },
+                    { id: 'elec-9', title: '电压降校验', text: '校验各末端回路的电压降是否在允许范围内（一般照明±5%，动力±10%）。对超限回路提出改进方案。' },
+                ],
+                plumb: [
+                    { id: 'plumb-1', title: '给水管网设计', text: '审查给水管网设计：管径选择、水压计算、热水循环系统、水箱容量。确认供水可靠性。' },
+                    { id: 'plumb-2', title: '排水系统检查', text: '检查排水系统：坡度、通气管道、存水弯、清扫口设置。确认无倒坡和堵塞风险。' },
+                    { id: 'plumb-3', title: '雨水排放设计', text: '审查雨水排放系统：天沟容量、落水管数量和位置、雨水井设计。确认暴雨重现期设计标准。' },
+                ],
+                hvac: [
+                    { id: 'hvac-1', title: '空调负荷计算', text: '根据建筑围护结构、人员密度、设备散热、新风需求，进行逐项冷热负荷计算。提供负荷汇总表。' },
+                    { id: 'hvac-2', title: '风管系统设计', text: '审查风管系统：风速选择、风管尺寸、风口布置、风量平衡。检查是否有噪声和压降问题。' },
+                    { id: 'hvac-3', title: '新风系统检查', text: '确认新风量满足卫生标准，检查新风取风口位置是否合理（远离污染源），过滤等级是否满足需求。' },
+                    { id: 'hvac-4', title: '排烟系统设计', text: '检查消防排烟系统：排烟量计算、排烟口位置、补风设计。确认符合消防规范。' },
+                ],
+                boq: [
+                    { id: 'boq-1', title: '工程量清单审核', text: '审核BOQ工程量清单的完整性和准确性，检查是否有漏项、重复计算。对比类似项目单价进行合理性分析。' },
+                    { id: 'boq-2', title: '材料规格核对', text: '逐项核对BOQ中的材料规格是否与图纸和技术规范一致。标记所有不一致项。' },
+                ],
+                cost: [
+                    { id: 'cost-1', title: '成本估算分析', text: '根据BOQ和市场单价，进行详细成本估算。分析各项成本占比，识别成本控制重点。' },
+                    { id: 'cost-2', title: 'Value Engineering', text: '从价值工程角度分析设计方案，提出在不影响功能前提下的成本优化建议。评估每项建议的节约潜力。' },
+                    { id: 'cost-3', title: '生命周期成本', text: '计算建筑全生命周期成本（LCC），包括初始投资、运行维护、能源消耗、更换周期。比较不同方案的LCC。' },
+                ],
+                constr: [
+                    { id: 'constr-1', title: '返工风险识别', text: '基于墨菲定律，识别施工过程中最可能出现的返工风险点。按发生概率和影响程度排序，提出预防措施。' },
+                    { id: 'constr-2', title: '施工可行性审查', text: '审查设计图纸的施工可行性，识别难以施工的节点。提出简化施工的替代方案。' },
+                    { id: 'constr-3', title: '材料优化建议', text: '分析当前材料选择，提出可替代的更经济或更易获取的材料方案。考虑当地供应链情况。' },
+                ],
+                qa: [
+                    { id: 'qa-1', title: '综合QA检查清单', text: '生成完整的工程质量检查清单，涵盖建筑、结构、电气、给排水、暖通、消防、BOQ、成本、效果图、施工、最终审查等所有专业。' },
+                ],
+            };
+            // 追问小贴士数据 (追问follow-up questions)
+            const followUpsData = {
+                'arch-1': ['请问走廊最小宽度应满足多少？', '能否提供不同形状空间的优化策略？', '请结合无障碍设计规范复核'],
+                'arch-3': ['防水层上翻高度要求是多少？', '排水坡度一般取多少比较合理？', '检修口最小尺寸建议？'],
+                'elec-3': ['母线额定电流选择依据是什么？', '是否有必要设置双电源切换？', '请推荐防护等级IP等级'],
+                'elec-8': ['请提供电压降计算公式', '电缆敷设方式对载流量影响多大？', '是否需要考虑谐波电流？'],
+                'hvac-1': ['请列出具体计算公式和参数', '如何考虑新风负荷？', '是否有必要做全年能耗模拟？'],
+                'cost-2': ['请给出每项建议的大致节约金额', '哪些优化可能影响建筑品质？', '有无类似项目的成功案例？'],
+                'constr-1': ['最常发生返工的工序是哪些？', '预防措施的成本大概多少？', '请按风险等级排序'],
+            };
+            function getFollowUps(promptId, categoryKey) {
+                if (followUpsData[promptId]) return followUpsData[promptId];
+                const defaults = {
+                    arch: ['请提供详细的尺寸标注和规范引用', '这种方案在防火和疏散方面是否满足要求？', '有没有更经济的替代材料？'],
+                    elec: ['请校验电压降和短路容量', '推荐使用哪种品牌的元器件？', '请提供电缆选型的详细计算过程'],
+                    plumb: ['是否需要设置减压阀？', '排水管道的清扫口如何布置？', '冷热水管保温要求是什么？'],
+                    hvac: ['请计算具体的风量和冷量', '噪声控制措施有哪些？', '是否需要变频控制？'],
+                    boq: ['请核对材料单价是否合理', '是否有漏项？', '请提供主要设备的品牌建议'],
+                    cost: ['能否进一步优化成本？', '列出成本最高前5项', '与同类项目成本对比如何？'],
+                    constr: ['哪些工序最容易出现返工？', '如何优化施工顺序？', '请推荐可靠的施工方法'],
+                    qa: ['哪些检查项最容易遗漏？', '请按优先级排序', '是否考虑季节性施工影响？'],
+                };
+                return defaults[categoryKey] || ['请详细说明', '有哪些常见误区？', '可以提供案例参考吗？'];
+            }
+
+            const platforms = [
+                { id: 'chatgpt', name: '🤖 ChatGPT' },
+                { id: 'claude', name: '🧠 Claude' },
+                { id: 'gemini', name: '🌟 Gemini' },
+                { id: 'hermes', name: '📜 Hermes' },
+                { id: 'qclaw', name: '⚖️ Qclaw' },
+                { id: 'opencode', name: '💻 OpenCode' },
+                { id: 'codex', name: '📝 Codex' },
+            ];
+            const qaCategories = ['Architecture','Structure','Electrical','Plumbing','HVAC','Fire','BOQ','Cost','Rendering','Construction','Final Review'];
+
+            // ────────── STATE ──────────
+            let currentView = 'dashboard';
+            let currentCategory = null;
+            let savedPrompts = JSON.parse(localStorage.getItem('mep_saved')||'[]');
+            let recentPrompts = JSON.parse(localStorage.getItem('mep_recent')||'[]');
+            let darkMode = localStorage.getItem('mep_dark')==='true';
+            let selectedPlatform = 'chatgpt';
+            let projectContext = JSON.parse(localStorage.getItem('mep_context')||'{}');
+            let qaChecks = JSON.parse(localStorage.getItem('mep_qa')||'{}');
+            let searchQuery = '';
+
+            const $views = {
+                dashboard: document.getElementById('view-dashboard'),
+                categories: document.getElementById('view-categories'),
+                editor: document.getElementById('view-editor'),
+                saved: document.getElementById('view-saved'),
+                settings: document.getElementById('view-settings'),
+            };
+            const $navItems = document.querySelectorAll('.nav-item');
+            const $themeToggle = document.getElementById('themeToggle');
+            const $toast = document.getElementById('toast');
+            const $savedBadge = document.getElementById('savedBadge');
+
+            function saveState() {
+                localStorage.setItem('mep_saved', JSON.stringify(savedPrompts));
+                localStorage.setItem('mep_recent', JSON.stringify(recentPrompts.slice(0,30)));
+                localStorage.setItem('mep_dark', darkMode);
+                localStorage.setItem('mep_context', JSON.stringify(projectContext));
+                localStorage.setItem('mep_qa', JSON.stringify(qaChecks));
+                updateBadge();
+            }
+            function updateBadge() {
+                if(savedPrompts.length>0){ $savedBadge.textContent=savedPrompts.length; $savedBadge.classList.add('show'); }
+                else $savedBadge.classList.remove('show');
+            }
+            function showToast(msg) {
+                $toast.textContent=msg; $toast.classList.add('show');
+                clearTimeout($toast._timeout); $toast._timeout=setTimeout(()=>$toast.classList.remove('show'),1800);
+            }
+            function buildFullPrompt(promptText) {
+                let ctx=''; const ctxObj=projectContext;
+                const filled=Object.entries(ctxObj).filter(([,v])=>v&&v.trim());
+                if(filled.length) ctx='\n\n【项目上下文】\n'+filled.map(([k,v])=>`- ${({projectName:'项目名称',country:'国家/地区',buildingType:'建筑类型',floors:'层数',ceilingHeight:'层高(m)',electricalStandard:'电气标准',voltage:'电压等级',dbQuantity:'配电箱数量',drawingVersion:'图纸版本'})[k]||k}: ${v}`).join('\n');
+                const platformNote = ({chatgpt:'\n\n[请以结构化方式输出，使用markdown格式]',claude:'\n\n[Please provide detailed structured response]',gemini:'\n\n[请提供详细的技术分析，分点列出]',hermes:'\n\n[Use concise technical language with bullet points]',qclaw:'\n\n[Provide legal/technical compliance analysis in clear sections]',opencode:'\n\n[Output as structured code-comment style]',codex:'\n\n[Provide concise code-oriented analysis]'})[selectedPlatform]||'';
+                return promptText+ctx+platformNote;
+            }
+            function copyToClipboard(text) {
+                const full=buildFullPrompt(text);
+                if(navigator.clipboard) navigator.clipboard.writeText(full).then(()=>showToast('✅ 已复制到剪贴板'));
+                else { const ta=document.createElement('textarea'); ta.value=full; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); showToast('✅ 已复制'); }
+                addRecent(text);
+            }
+            function copyFollowUp(text) { const full=buildFullPrompt(text); if(navigator.clipboard) navigator.clipboard.writeText(full).then(()=>showToast('📎 追问已复制')); else { const ta=document.createElement('textarea'); ta.value=full; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); showToast('📎 追问已复制'); } addRecent(text); }
+            function addRecent(promptText) { recentPrompts=recentPrompts.filter(p=>p.text!==promptText); recentPrompts.unshift({text:promptText,time:Date.now()}); if(recentPrompts.length>30) recentPrompts=recentPrompts.slice(0,30); saveState(); }
+            function toggleSave(promptId, promptData) {
+                const idx=savedPrompts.findIndex(p=>p.id===promptId);
+                if(idx>=0){ savedPrompts.splice(idx,1); showToast('已取消收藏'); }
+                else { savedPrompts.push({id:promptId,...promptData,savedAt:Date.now()}); showToast('⭐ 已收藏'); }
+                saveState(); if(currentView==='saved') renderSavedView(); if(currentView==='editor') renderEditorView(); i]f(currentView==='categories') renderCategoriesView();
+            }
+            function isSaved(promptId){ return savedPrompts.some(p=>p.id===promptId); }
+            function switchView(viewName) {
+                currentView=viewName; Object.keys($views).forEach(k=>$views[k].classList.remove('active')); $views[viewName].classList.add('active');
+                $navItems.forEach(n=>n.classList.remove('active')); const nav=document.querySelector(`.nav-item[data-view="${viewName}"]`); if(nav) nav.classList.add('active');
+                renderView(viewName); window.scrollTo({top:0,behavior:'smooth'});
+            }
+            function renderView(viewName) {
+                if(viewName==='dashboard') renderDashboard();
+                else if(viewName==='categories') renderCategoriesView();
+                else if(viewName==='editor') renderEditorView();
+                else if(viewName==='saved') renderSavedView();
+                else if(viewName==='settings') renderSettingsView();
+            }
+            function escapeHtml(str) { const d=document.createElement('div'); d.textContent=str; return d.innerHTML; }
+            function findPromptById(id) {
+                for(const [cat, prompts] of Object.entries(promptsData)){ const f=prompts.find(p=>p.id===id); if(f) return {...f, categoryKey:cat}; }
+                const saved=savedPrompts.find(p=>p.id===id); if(saved) return {...saved, categoryKey:'saved'};
+                return null;
+            }
+            // 通用提示词卡片渲染 (含追问小贴士)
+            function renderPromptCard(p, categoryKey, extraClass='') {
+                const saved=i
