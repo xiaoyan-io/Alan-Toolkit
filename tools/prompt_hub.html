@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>AI Prompt 速查库 · Alan Toolkit</title>
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    /* Prompt Hub：与根 index.html 同风格的深色玻璃拟态 */
+    :root{
+      --ph-accent: #ec4899;
+      --ph-accent-glow: rgba(236, 72, 153, 0.15);
+    }
+    body{ background: var(--bg); min-height: 100dvh; }
+    .ph-wrap{ max-width: 1100px; margin: 0 auto; padding: 0 20px 90px; }
+    .ph-header{ display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+    .ph-title{ font-size: 20px; font-weight: 800; letter-spacing: -0.5px; color: var(--text); display: flex; align-items: center; gap: 8px; }
+    .ph-add{ width: 40px; height: 40px; border-radius: 10px; border: 1px solid var(--card-border); background: var(--card-bg); color: var(--text); cursor: pointer; font-size: 20px; display: grid; place-items: center; transition: .2s; }
+    .ph-add:hover{ border-color: var(--ph-accent); color: var(--ph-accent); background: var(--ph-accent-glow); }
+    .ph-search{ margin-bottom: 14px; }
+    .ph-search input{ width: 100%; padding: 11px 16px; border: 1px solid var(--card-border); border-radius: 12px; background: var(--input-bg); color: var(--text); font-size: 14px; outline: none; backdrop-filter: blur(8px); }
+    .ph-search input::placeholder{ color: var(--text-secondary); }
+    .ph-count{ font-size: 12px; color: var(--text-secondary); margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+    .ph-tabs{ display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+    .ph-tab{ padding: 7px 16px; border-radius: 20px; border: 1px solid var(--card-border); background: var(--tag-bg); color: var(--text-secondary); font-size: 13px; cursor: pointer; transition: .2s; white-space: nowrap; }
+    .ph-tab:hover{ color: var(--text); }
+    .ph-tab.active{ background: var(--ph-accent); color: #fff; border-color: var(--ph-accent); }
+    .ph-grid{ display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+    .ph-card{ position: relative; display: flex; flex-direction: column; gap: 10px; padding: 18px 18px 14px; background: var(--card-bg); backdrop-filter: blur(var(--glass-blur)); -webkit-backdrop-filter: blur(var(--glass-blur)); border: 1px solid var(--card-border); border-radius: var(--card-radius); box-shadow: 0 4px 20px var(--shadow); transition: .25s; }
+    .ph-card:hover{ transform: translateY(-4px); box-shadow: 0 8px 32px var(--shadow-hover); border-color: rgba(236, 72, 153, 0.35); }
+    .ph-card-head{ display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+    .ph-card-title{ font-weight: 800; font-size: 15px; color: var(--text); line-height: 1.35; }
+    .ph-card-cat{ font-size: 10.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.12em; padding: 3px 8px; border-radius: 8px; background: var(--ph-accent-glow); color: var(--ph-accent); border: 1px solid rgba(236, 72, 153, 0.28); white-space: nowrap; }
+    .ph-card-body{ font-size: 13px; line-height: 1.65; color: var(--text-secondary); background: rgba(0, 0, 0, 0.15); padding: 12px 14px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.04); font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; white-space: pre-wrap; word-break: break-word; position: relative; }
+    .ph-var{ color: #f472b6; font-weight: 800; background: rgba(236, 72, 153, 0.18); padding: 0 4px; border-radius: 4px; border: 1px solid rgba(236, 72, 153, 0.3); }
+    .ph-copy{ position: absolute; top: 10px; right: 10px; width: 28px; height: 28px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1); background: rgba(255, 255, 255, 0.05); color: var(--text-secondary); font-size: 13px; cursor: pointer; display: grid; place-items: center; transition: .2s; opacity: 0; }
+    .ph-card:hover .ph-copy{ opacity: 1; }
+    .ph-copy:hover{ background: var(--ph-accent); color: #fff; border-color: var(--ph-accent); }
+    .ph-empty{ grid-column: 1 / -1; text-align: center; padding: 60px 20px; color: var(--text-secondary); }
+
+    /* Modal —— 新增提示词 */
+    .modal-overlay{ position: fixed; inset: 0; background: rgba(0, 0, 0, 0.45); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); z-index: 100; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity .3s; }
+    .modal-overlay.open{ opacity: 1; pointer-events: auto; }
+    .modal{ background: var(--card-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid var(--card-border); border-radius: 16px; padding: 24px; width: 90%; max-width: 480px; box-shadow: 0 20px 60px var(--shadow-hover); transform: translateY(12px); transition: transform .3s; }
+    .modal-overlay.open .modal{ transform: none; }
+    .modal h3{ margin: 0 0 16px; font-size: 17px; font-weight: 800; color: var(--text); }
+    .modal label{ display: block; font-size: 12.5px; color: var(--text-secondary); margin-bottom: 6px; font-weight: 700; }
+    .modal input, .modal select, .modal textarea{ width: 100%; padding: 10px 14px; border: 1px solid var(--card-border); border-radius: 10px; background: var(--input-bg); color: var(--text); font-size: 13.5px; outline: none; transition: border-color .2s; font-family: inherit; box-sizing: border-box; }
+    .modal textarea{ min-height: 150px; resize: vertical; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .modal input:focus, .modal select:focus, .modal textarea:focus{ border-color: var(--accent); }
+    .modal-actions{ display: flex; gap: 10px; justify-content: flex-end; margin-top: 18px; }
+    .modal button{ padding: 9px 18px; border-radius: 10px; border: 1px solid var(--card-border); background: var(--input-bg); color: var(--text); font-size: 13.5px; cursor: pointer; transition: .2s; }
+    .modal button.primary{ background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 800; }
+    .modal button:hover{ opacity: .9; }
+
+    /* Toast */
+    .ph-toast{ position: fixed; bottom: 24px; left: 50%; transform: translate(-50%, 110px); background: rgba(20, 20, 30, 0.92); color: #fff; padding: 10px 18px; border-radius: 50px; font-size: 13px; font-weight: 700; z-index: 200; pointer-events: none; opacity: 0; transition: all .3s; border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 10px 30px rgba(0,0,0,0.35); }
+    .ph-toast.show{ opacity: 1; transform: translate(-50%, 0); }
+
+    @media (max-width: 600px){
+      .ph-grid{ grid-template-columns: 1fr; }
+      .modal{ width: 92vw; padding: 18px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="ph-wrap">
+    <div class="ph-header">
+      <div class="ph-title">💬 AI Prompt 速查库</div>
+      <button class="ph-add" id="btnAdd" title="新增提示词">+</button>
+    </div>
+
+    <div class="ph-search">
+      <input type="text" id="phSearch" placeholder="搜索提示词标题或内容…" autocomplete="off">
+    </div>
+
+    <div class="ph-count">
+      <span id="phCount">0 条</span>
+      <span id="phActiveCat">全部</span>
+    </div>
+
+    <div class="ph-tabs">
+      <button class="ph-tab active" data-cat="all">全部</button>
+      <button class="ph-tab" data-cat="3d">3D 空间设计</button>
+      <button class="ph-tab" data-cat="mep">M&E 电气工程</button>
+      <button class="ph-tab" data-cat="quotation">商务报价</button>
+      <button class="ph-tab" data-cat="dev">编程开发</button>
+    </div>
+
+    <div class="ph-grid" id="phGrid"></div>
+  </div>
+
+  <!-- Toast -->
+  <div class="ph-toast" id="phToast"></div>
+
+  <!-- Modal：新增提示词 -->
+  <div class="modal-overlay" id="phModal">
+    <div class="modal">
+      <h3>✨ 新增提示词模板</h3>
+      <form id="phForm">
+        <label>名称</label>
+        <input type="text" name="name" required placeholder="例如：室内透视渲染提示词">
+
+        <label>分类</label>
+        <select name="category" required>
+          <option value="3d">3D 空间设计</option>
+          <option value="mep">M&E 电气工程</option>
+          <option value="quotation">商务报价</option>
+          <option value="dev">编程开发</option>
+          <option value="other">自定义</option>
+        </select>
+
+        <label>模板内容（可使用 [变量名] 做占位符）</label>
+        <textarea name="content" required placeholder="请输入提示词模板，变量用 [方括号] 包裹，例如：[项目名称]"></textarea>
+
+        <div class="modal-actions">
+          <button type="button" id="phCancel">取消</button>
+          <button type="submit" class="primary">保存</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const CAT_LABELS = {
+      all: '全部',
+      '3d': '3D 空间设计',
+      mep: 'M&E 电气工程',
+      quotation: '商务报价',
+      dev: '编程开发',
+      other: '自定义'
+    };
+
+    const DEFAULT_ITEMS = [
+      {
+        id: 'd_1',
+        name: '室内透视渲染提示词',
+        category: '3d',
+        content: '你是一名专业的 3D 空间设计师与渲染艺术家。请为 [空间类型] 创建一组 [风格] 风格的室内透视图提示词。\n要求：1) 主体：[空间类型]，[面积]㎡；\n2) 灯光：[灯光方案]，自然光与人工光结合；\n3) 材质：[主要材质]，[辅助材质]；\n4) 镜头：[视角角度]，焦距 [焦距]mm；\n5) 渲染器：[渲染器]，分辨率 [分辨率]。\n请输出可直接用于 Midjourney/Stable Diffusion 的英文提示词。'
+      },
+      {
+        id: 'd_2',
+        name: '配电系统设计审查提示词',
+        category: 'mep',
+        content: '请扮演资深 M&E 电气工程师，对 [项目名称] 的配电系统进行合规性审查。\n审查要点：1) 电压等级：[电压等级]，是否符合 [适用规范]；\n2) 主配电箱位置与容量是否满足负荷需求；\n3) MCB/RCCB 选型与跳闸协调性；\n4) 接地系统（TN-S/TT）设计是否完整；\n5) 消防联动与应急照明电源配置。\n请列出潜在风险点并给出整改建议，输出结构化审查报告。'
+      },
+      {
+        id: 'd_3',
+        name: '工程服务报价单撰写提示词',
+        category: 'quotation',
+        content: '请为 [客户名称] 撰写一份正式的工程服务报价单。\n包含：1) 报价编号：QT-[年份]-[序号]，日期：[日期]；\n2) 服务项目：[服务项目]，详细描述工作范围；\n3) 数量与单位：[数量][单位]；\n4) 单价：[单价] [币种]，金额自动计算；\n5) 税率：[税率]%，有效期至：[有效期]。\n请使用专业商务语言，输出 Markdown 格式表格，并附条款说明。'
+      },
+      {
+        id: 'd_4',
+        name: '代码生成与注释提示词',
+        category: 'dev',
+        content: '请使用 [编程语言] 编写一个实现 [功能描述] 的模块。\n要求：1) 基于 [框架/库] 开发；\n2) 代码需包含详细中文注释与类型定义；\n3) 处理 [边界情况] 异常；\n4) 提供使用示例与单元测试；\n5) 输出可直接运行的代码块，并简要说明设计思路与复杂度。'
+      }
+    ];
+
+    const STORAGE_KEY = 'prompt_hub_items';
+
+    let items = [];
+    let currentCat = 'all';
+    let searchTerm = '';
+
+    const $ = id => document.getElementById(id);
+
+    function getCustomItems(){
+      try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch { return []; }
+    }
+    function saveCustomItems(arr){ localStorage.setItem(STORAGE_KEY, JSON.stringify(arr)); }
+
+    function highlightVars(text){
+      return text.replace(/\[([^\]]+)\]/g, '<span class="ph-var">[$1]</span>');
+    }
+    function escapeHtml(str){
+      const d = document.createElement('div'); d.textContent = str; return d.innerHTML;
+    }
+
+    function render(){
+      const filtered = items.filter(it => {
+        if (currentCat !== 'all' && it.category !== currentCat) return false;
+        const q = searchTerm.toLowerCase();
+        if (q && !it.name.toLowerCase().includes(q) && !it.content.toLowerCase().includes(q)) return false;
+        return true;
+      });
+
+      $('phCount').textContent = filtered.length + ' 条';
+      $('phActiveCat').textContent = CAT_LABELS[currentCat] || currentCat;
+
+      if (filtered.length === 0) {
+        $('phGrid').innerHTML = '<div class="ph-empty">暂无匹配的提示词，试试更换分类或关键词。</div>';
+        return;
+      }
+
+      $('phGrid').innerHTML = filtered.map(it => {
+        const isDefault = it.id.startsWith('d_');
+        const escapedContent = escapeHtml(it.content);
+        const highlighted = highlightVars(escapedContent);
+        return `
+          <div class="ph-card">
+            <div class="ph-card-head">
+              <div class="ph-card-title">${escapeHtml(it.name)}</div>
+              <span class="ph-card-cat">${CAT_LABELS[it.category] || it.category}</span>
+            </div>
+            <div class="ph-card-body">${highlighted}</div>
+            <button class="ph-copy" title="复制模板" data-content="${escapeHtml(it.content)}">📋</button>
+            ${!isDefault ? `<button class="ph-del" style="position:absolute;top:10px;right:42px;width:28px;height:28px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:var(--text-secondary);font-size:13px;cursor:pointer;" data-id="${it.id}" title="删除">×</button>` : ''}
+          </div>
+        `;
+      }).join('');
+
+      // 复制按钮事件
+      document.querySelectorAll('.ph-copy').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const content = btn.dataset.content ? decodeHTMLEntities(btn.dataset.content) : '';
+          copyText(content);
+          btn.textContent = '✅';
+          setTimeout(() => btn.textContent = '📋', 900);
+        });
+      });
+
+      // 删除自定义按钮事件
+      document.querySelectorAll('.ph-del').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const id = btn.dataset.id;
+          items = items.filter(it => it.id !== id);
+          saveCustomItems(items.filter(it => !it.id.startsWith('d_')));
+          render();
+          showToast('已删除');
+        });
+      });
+    }
+
+    function decodeHTMLEntities(str){
+      const d = document.createElement('textarea'); d.innerHTML = str; return d.value;
+    }
+
+    function copyText(text){
+      if (!text) return;
+      if (navigator.clipboard && window.isSecureContext){
+        navigator.clipboard.writeText(text).then(() => showToast('已复制到剪贴板'));
+      } else {
+        const ta = document.createElement('textarea');
+        ta.value = text; ta.style.position = 'fixed'; ta.style.left = '-9999px';
+        document.body.appendChild(ta); ta.select();
+        document.execCommand('copy'); document.body.removeChild(ta);
+        showToast('已复制');
+      }
+    }
+
+    function showToast(msg){
+      const t = $('phToast');
+      t.textContent = msg; t.classList.add('show');
+      clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('show'), 1600);
+    }
+
+    // 初始化数据：默认项 + 本地自定义项
+    function initData(){
+      const custom = getCustomItems();
+      items = [...DEFAULT_ITEMS, ...custom];
+    }
+
+    // UI 事件
+    function bindUI(){
+      // 分类筛选
+      $('phGrid').closest('.ph-wrap').querySelectorAll('.ph-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          document.querySelectorAll('.ph-tab').forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          currentCat = tab.dataset.cat;
+          render();
+        });
+      });
+
+      // 搜索
+      $('phSearch').addEventListener('input', (e) => {
+        searchTerm = e.target.value;
+        render();
+      });
+
+      // 新增按钮
+      $('btnAdd').addEventListener('click', () => {
+        $('phModal').classList.add('open');
+        $('phForm').reset();
+      });
+
+      $('phCancel').addEventListener('click', () => {
+        $('phModal').classList.remove('open');
+      });
+
+      $('phModal').addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) $('phModal').classList.remove('open');
+      });
+
+      $('phForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const fd = new FormData(e.target);
+        const name = fd.get('name').trim();
+        const category = fd.get('category');
+        const content = fd.get('content').trim();
+        if (!name || !content) return;
+        const newItem = {
+          id: 'u_' + Date.now(),
+          name,
+          category,
+          content
+        };
+        items.unshift(newItem);
+        saveCustomItems(items.filter(it => !it.id.startsWith('d_')));
+        render();
+        $('phModal').classList.remove('open');
+        showToast('新增成功');
+      });
+
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') $('phModal').classList.remove('open');
+      });
+    }
+
+    initData();
+    render();
+    bindUI();
+  </script>
+</body>
+</html>

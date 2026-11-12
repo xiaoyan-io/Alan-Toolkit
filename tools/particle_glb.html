@@ -68,7 +68,7 @@
 
     <div class="panel">
       <h1>3D 粒子·GLB</h1>
-      <p class="sub">柔和光点粒子 &bull; 加法混合 &bull; 手势轨道 &bull; 滑块控制</p>
+      <p class="sub">纯点云渲染 &bull; 加法混合 &bull; 双指缩放 &bull; 滑块实时控制</p>
 
       <div class="group">
         <div class="g-title"><i class="fas fa-palette"></i> 粒子颜色</div>
@@ -85,35 +85,29 @@
       <div class="group">
         <div class="g-title"><i class="fas fa-layer-group"></i> 粒子数量</div>
         <div class="row"><span>数量</span><span id="vCount">2000</span></div>
-        <input type="range" id="pCount" min="300" max="6000" step="100" value="2000">
-      </div>
-
-      <div class="group">
-        <div class="g-title"><i class="fas fa-sliders-h"></i> 旋转速度</div>
-        <div class="row"><span>速度</span><span id="vSpeed">0.0008</span></div>
-        <input type="range" id="pSpeed" min="0" max="0.005" step="0.0001" value="0.0008">
+        <input type="range" id="pCount" min="100" max="10000" step="100" value="2000">
       </div>
 
       <div class="group">
         <div class="g-title"><i class="fas fa-opacity"></i> 透明度</div>
-        <div class="row"><span>不透明</span><span id="vOpacity">0.9</span></div>
-        <input type="range" id="pOpacity" min="0" max="1" step="0.05" value="0.9">
+        <div class="row"><span>不透明</span><span id="vOpacity">0.8</span></div>
+        <input type="range" id="pOpacity" min="0" max="1" step="0.05" value="0.8">
       </div>
 
       <div class="group">
         <div class="g-title"><i class="fas fa-cube"></i> GLB 模型</div>
         <button class="btn" id="btnLoadGLB">加载本地 GLB / GLTF</button>
-        <input type="file" id="glbFile" accept=".glb,.gltf" style="display:none;">
-        <div class="status" id="status">使用内置占位模型（无网络依赖）</div>
+        <input type="file" id="glbFileHidden" accept=".glb,.gltf" style="display:none;">
+        <div class="status" id="status">内置占位点云（无网络依赖）</div>
       </div>
     </div>
 
     <div class="hint">
-      <b>手势：</b>单指/左键拖拽旋转 &bull; 双指/滚轮缩放 &bull; 双指点击重置视角
+      <b>手势：</b>单指/左键拖拽旋转 &bull; 双指捏合缩放粒子群 &bull; 滚轮缩放相机 &bull; 双击重置
     </div>
   </div>
 
-  <input type="file" id="glbFileHidden" accept=".glb,.gltf" style="display:none;">
+  <input type="file" id="glbFileHidden2" accept=".glb,.gltf" style="display:none;">
 
   <!-- Three.js ES modules via importmap（纯静态，无构建） -->
   <script type="importmap">
@@ -134,23 +128,24 @@
       count: 2000,
       size: 0.35,
       color: 0x8b5cf6,
-      opacity: 0.9,
-      speed: 0.0008,
-      radius: 15,
-      modelUrl: '', // 可在此填写公开 GLB URL，或使用下方“加载本地 GLB”
+      opacity: 0.8,   // 默认不为 0，确保粒子可见
+      speed: 0.0005,
+      radius: 18,
     };
 
-    /* ---------- 核心升级 1：Canvas 生成平滑径向渐变圆形贴图 + 加法混合 ---------- */
+    /* ---------- 工具 ---------- */
+    const $ = id => document.getElementById(id);
+
     function makeParticleMap(size = 128) {
       const c = document.createElement('canvas');
       c.width = c.height = size;
       const ctx = c.getContext('2d', { willReadFrequently: false });
       const r = size / 2;
       const g = ctx.createRadialGradient(r, r, 0, r, r, r);
-      g.addColorStop(0, 'rgba(255,255,255,1)');          // 中心亮白
-      g.addColorStop(0.30, 'rgba(139, 92, 246, 0.85)');  // 紫晕
-      g.addColorStop(0.70, 'rgba(99, 102, 241, 0.35)');  // 蓝晕
-      g.addColorStop(1, 'rgba(0,0,0,0)');                // 边缘全透明
+      g.addColorStop(0, 'rgba(255,255,255,1)');
+      g.addColorStop(0.30, 'rgba(139, 92, 246, 0.85)');
+      g.addColorStop(0.70, 'rgba(99, 102, 241, 0.35)');
+      g.addColorStop(1, 'rgba(0,0,0,0)');
       ctx.fillStyle = g;
       ctx.fillRect(0, 0, size, size);
       const t = new THREE.CanvasTexture(c);
@@ -158,36 +153,57 @@
       return t;
     }
 
+    function showStatus(msg, ok = true) {
+      const el = $('status');
+      el.textContent = msg;
+      el.style.color = ok ? '#a5f3fc' : '#fca5a5';
+      el.style.background = ok ? 'rgba(139,92,246,0.12)' : 'rgba(255,165,165,0.12)';
+      el.style.borderColor = ok ? 'rgba(139,92,246,0.35)' : 'rgba(255,165,165,0.35)';
+    }
+
     /* ---------- 全局状态 ---------- */
-    let scene, camera, renderer, clock;
-    let model = null, particles = null, pMaterial = null;
-    const controls = { theta: 0, phi: Math.PI * 0.35, dist: 36, target: new THREE.Vector3() };
-    const pointers = new Map();      // pointerId -> {x,y}
+    let scene, camera, renderer, rafId;
+    let particles = null, pMaterial = null, pGeometry = null;
+
+    // 原始顶点（Float32Array，xyz...）与对应颜色
+    let basePositions = null;
+    let baseColors = null;
+    let totalVertices = 0;
+
+    // 当前显示数量（通过 drawRange 控制，无需重建几何体）
+    let currentCount = CFG.count;
+
+    // 粒子群本体缩放（膨胀/聚拢），由双指捏合驱动
+    let particleScale = 1.0;
+    let targetParticleScale = 1.0;
+
+    // 轨道相机
+    const controls = { theta: 0, phi: Math.PI * 0.35, dist: 40, target: new THREE.Vector3() };
+
+    // 多指追踪
+    const pointers = new Map(); // pointerId -> {x,y}
     let touchDist = 0;
-    let rafId = null;
 
     /* ---------- 初始化 ---------- */
     function init() {
       scene = new THREE.Scene();
       scene.background = new THREE.Color(0x05050a);
-      scene.fog = new THREE.Fog(0x05050a, 12, 70);
+      scene.fog = new THREE.Fog(0x05050a, 15, 90);
 
-      camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 0.1, 140);
-      camera.position.set(0, 0, CFG.dist);
+      camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 0.1, 200);
+      camera.position.set(0, 0, CFG.dist || 40);
 
-      const canvas = document.getElementById('glcanvas');
+      const canvas = $('glcanvas');
       renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, powerPreference: 'high-performance' });
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
       renderer.setSize(innerWidth, innerHeight);
 
-      // 灯光
-      scene.add(new THREE.AmbientLight(0xffffff, 0.5));
-      const dl = new THREE.DirectionalLight(0x8b5cf6, 1.2);
+      // 灯光（对点云无实质影响，保留用于氛围）
+      scene.add(new THREE.AmbientLight(0xffffff, 0.4));
+      const dl = new THREE.DirectionalLight(0x8b5cf6, 1.0);
       dl.position.set(5, 8, 5); scene.add(dl);
-      const pl = new THREE.PointLight(0xf59e0b, 1.6, 70);
-      pl.position.set(-5, 4, -8); scene.add(pl);
 
-      // 粒子材质：圆柔和贴图 + 加法混合（depthWrite 关闭，消除方块锯齿，重叠发光）
+      // 材质：圆柔和贴图 + 加法混合 + 顶点颜色
       const pMap = makeParticleMap();
       pMaterial = new THREE.PointsMaterial({
         map: pMap,
@@ -199,163 +215,221 @@
         depthWrite: false,
         depthTest: true,
         sizeAttenuation: true,
+        vertexColors: true,
       });
 
-      particles = buildParticles(CFG.count);
-      scene.add(particles);
-
-      // 占位模型（不依赖网络，确保开箱即用无报错）
-      buildPlaceholderModel();
-      if (CFG.modelUrl) loadGLB(CFG.modelUrl);
+      // 内置占位点云（球体分布），确保开箱即用可见
+      buildPlaceholderPoints();
 
       window.addEventListener('resize', onResize);
       setupGestures(canvas);
       setupUI();
 
-      document.getElementById('loading').style.opacity = '0';
-      setTimeout(() => document.getElementById('loading').remove(), 400);
+      $('loading').style.opacity = '0';
+      setTimeout(() => $('loading').remove(), 400);
 
       animate();
     }
 
-    /* 粒子几何体：球壳均匀分布，仅在数量变化时重建 */
-    function buildParticles(n) {
-      if (particles) {
-        scene.remove(particles);
-        particles.geometry.dispose();
-      }
-      const geo = new THREE.BufferGeometry();
-      const pos = new Float32Array(n * 3);
+    /* 构建内置占位点云（球壳均匀分布） */
+    function buildPlaceholderPoints() {
+      const n = CFG.count;
+      const positions = new Float32Array(n * 3);
+      const colors = new Float32Array(n * 3);
+      const color = new THREE.Color(CFG.color);
+
       for (let i = 0; i < n; i++) {
         const u = Math.random(), v = Math.random();
         const theta = 2 * Math.PI * u;
         const phi = Math.acos(2 * v - 1);
-        const rad = CFG.radius * (0.55 + 0.9 * Math.random());
-        pos[i * 3] = rad * Math.sin(phi) * Math.cos(theta);
-        pos[i * 3 + 1] = rad * Math.sin(phi) * Math.sin(theta);
-        pos[i * 3 + 2] = rad * Math.cos(phi);
+        const rad = CFG.radius * (0.5 + Math.random());
+        positions[i * 3] = rad * Math.sin(phi) * Math.cos(theta);
+        positions[i * 3 + 1] = rad * Math.sin(phi) * Math.sin(theta);
+        positions[i * 3 + 2] = rad * Math.cos(phi);
+
+        colors[i * 3] = color.r;
+        colors[i * 3 + 1] = color.g;
+        colors[i * 3 + 2] = color.b;
       }
-      geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-      return new THREE.Points(geo, pMaterial);
+
+      basePositions = positions;
+      baseColors = colors;
+      totalVertices = n;
+      currentCount = Math.min(CFG.count, n);
+      $('pCount').max = Math.max(10000, n);
+      $('pCount').value = currentCount;
+      $('vCount').textContent = currentCount;
+
+      createPoints();
+      showStatus('内置占位点云：' + n + ' 个顶点');
     }
 
-    /* 占位模型：发光 Ikosahedron + TorusKnot，离线也能看到 3D 内容 */
-    function buildPlaceholderModel() {
-      if (model) {
-        scene.remove(model);
-        model.traverse(o => {
-          if (o.geometry) o.geometry.dispose();
-          if (o.material) o.material.dispose();
-        });
+    /* 根据当前 basePositions/baseColors 创建 Points 对象 */
+    function createPoints() {
+      if (particles) {
+        scene.remove(particles);
+        if (pGeometry) pGeometry.dispose();
       }
-      const group = new THREE.Group();
-      const ico = new THREE.Mesh(
-        new THREE.IcosahedronGeometry(2.4, 2),
-        new THREE.MeshStandardMaterial({ color: 0x8b5cf6, emissive: 0x3b0f7c, emissiveIntensity: 1, roughness: 0.3, metalness: 0.4 })
-      );
-      const torus = new THREE.Mesh(
-        new THREE.TorusKnotGeometry(1.7, 0.55, 120, 24),
-        new THREE.MeshStandardMaterial({ color: 0xf59e0b, emissive: 0x5b2a00, emissiveIntensity: 0.8 })
-      );
-      torus.position.y = 0.7;
-      group.add(ico, torus);
-      model = group;
-      scene.add(model);
+
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute('position', new THREE.BufferAttribute(basePositions, 3));
+      geo.setAttribute('color', new THREE.BufferAttribute(baseColors, 3));
+      geo.setDrawRange(0, Math.min(currentCount, totalVertices));
+
+      particles = new THREE.Points(geo, pMaterial);
+      scene.add(particles);
+      pGeometry = geo;
     }
 
-    /* GLB 加载（GLTFLoader），失败时保留占位模型，不中断页面 */
+    /* 居中缩放顶点数组（in-place，Float32Array xyz...） */
+    function centerAndScaleArray(arr) {
+      let minX = Infinity, minY = Infinity, minZ = Infinity;
+      let maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
+      for (let i = 0; i < arr.length; i += 3) {
+        const x = arr[i], y = arr[i + 1], z = arr[i + 2];
+        if (x < minX) minX = x; if (x > maxX) maxX = x;
+        if (y < minY) minY = y; if (y > maxY) maxY = y;
+        if (z < minZ) minZ = z; if (z > maxZ) maxZ = z;
+      }
+      const cx = (minX + maxX) / 2;
+      const cy = (minY + maxY) / 2;
+      const cz = (minZ + maxZ) / 2;
+      let maxDim = 0;
+      for (let i = 0; i < arr.length; i += 3) {
+        const dx = Math.abs(arr[i] - cx);
+        const dy = Math.abs(arr[i + 1] - cy);
+        const dz = Math.abs(arr[i + 2] - cz);
+        if (dx > maxDim) maxDim = dx;
+        if (dy > maxDim) maxDim = dy;
+        if (dz > maxDim) maxDim = dz;
+      }
+      const scale = CFG.radius / (maxDim || 1);
+      for (let i = 0; i < arr.length; i += 3) {
+        arr[i] = (arr[i] - cx) * scale;
+        arr[i + 1] = (arr[i + 1] - cy) * scale;
+        arr[i + 2] = (arr[i + 2] - cz) * scale;
+      }
+    }
+
+    /* ---------- GLB 强制粒子化：不渲染 Mesh，仅提取顶点 ---------- */
     function loadGLB(url) {
       const loader = new GLTFLoader();
       loader.load(
         url,
         (gltf) => {
-          const m = gltf.scene || gltf.scenes[0];
-          const box = new THREE.Box3().setFromObject(m);
-          const center = new THREE.Vector3();
-          box.getCenter(center);
-          const size = new THREE.Vector3();
-          box.getSize(size);
-          const maxd = Math.max(size.x, size.y, size.z) || 1;
-          const scale = 5 / maxd;
-          m.scale.set(scale, scale, scale);
-          m.position.sub(center.multiplyScalar(scale));
-          m.traverse(o => {
-            if (o.isMesh) {
-              o.castShadow = true;
-              o.receiveShadow = true;
-              if (o.material) o.material = o.material.clone();
+          const raw = [];
+          gltf.scene.traverse((child) => {
+            if (child.isMesh && child.geometry && child.geometry.attributes.position) {
+              const posAttr = child.geometry.attributes.position;
+              child.updateMatrixWorld();
+              const m = child.matrixWorld;
+              for (let i = 0; i < posAttr.count; i++) {
+                const x = posAttr.getX(i);
+                const y = posAttr.getY(i);
+                const z = posAttr.getZ(i);
+                const v = new THREE.Vector3(x, y, z).applyMatrix4(m);
+                raw.push(v.x, v.y, v.z);
+              }
             }
           });
-          if (model) scene.remove(model);
-          model = m;
-          scene.add(model);
-          document.getElementById('status').textContent = 'GLB 模型加载成功';
-          document.getElementById('status').style.color = '#a5f3fc';
+
+          if (raw.length === 0) {
+            showStatus('未从模型中提取到有效顶点', false);
+            return;
+          }
+
+          centerAndScaleArray(raw);
+
+          const colors = new Float32Array(raw.length);
+          const color = new THREE.Color(CFG.color);
+          for (let i = 0; i < colors.length / 3; i++) {
+            colors[i * 3] = color.r;
+            colors[i * 3 + 1] = color.g;
+            colors[i * 3 + 2] = color.b;
+          }
+
+          basePositions = new Float32Array(raw);
+          baseColors = colors;
+          totalVertices = raw.length / 3;
+          currentCount = Math.min(CFG.count, totalVertices);
+          $('pCount').max = Math.max(10000, totalVertices);
+          $('pCount').value = currentCount;
+          $('vCount').textContent = currentCount;
+
+          createPoints();
+          showStatus('GLB 粒子化完成：' + totalVertices + ' 个顶点（已禁用 Mesh 渲染）');
         },
         undefined,
         (err) => {
-          console.warn('GLB 加载失败，已保留占位模型:', err);
-          document.getElementById('status').textContent = 'GLB 加载失败，使用占位模型';
-          document.getElementById('status').style.color = '#fca5a5';
+          console.warn('GLB 加载失败:', err);
+          showStatus('GLB 加载失败，保留占位点云', false);
         }
       );
     }
 
-    /* ---------- 手势识别：pointer/touch（无摄像头、无 MediaPipe，绝不报错） ---------- */
+    /* ---------- 手势：单指旋转 / 双指捏合缩放粒子群 / 滚轮相机 ---------- */
     function setupGestures(el) {
-      const down = (e) => {
+      const onDown = (e) => {
         e.preventDefault();
         pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
         el.setPointerCapture(e.pointerId);
       };
-      const move = (e) => {
+
+      const onMove = (e) => {
         e.preventDefault();
-        pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        const prev = pointers.get(e.pointerId);
+        if (!prev) return;
+        const dx = e.clientX - prev.x;
+        const dy = e.clientY - prev.y;
+        pointers.get(e.pointerId).x = e.clientX;
+        pointers.get(e.pointerId).y = e.clientY;
 
         if (pointers.size === 1) {
           // 单指 / 左键：绕目标旋转（轨道）
-          const p = pointers.get(e.pointerId);
-          const dx = (e.clientX - p.x) * 0.004;
-          const dy = (e.clientY - p.y) * 0.004;
-          controls.theta += dx;
-          controls.phi = THREE.MathUtils.clamp(controls.phi + dy, 0.05, Math.PI - 0.05);
-          pointers.get(e.pointerId).x = e.clientX;
-          pointers.get(e.pointerId).y = e.clientY;
+          controls.theta += dx * 0.004;
+          controls.phi = THREE.MathUtils.clamp(controls.phi + dy * 0.004, 0.05, Math.PI - 0.05);
         } else if (pointers.size >= 2) {
-          // 双指：捏合缩放
-          const arr = [...pointers.values()];
-          const d = Math.hypot(arr[0].x - arr[1].x, arr[0].y - arr[1].y);
+          // 双指：捏合控制粒子群本体缩放（膨胀/聚拢）
+          const vals = [...pointers.values()];
+          const d = Math.hypot(vals[0].x - vals[1].x, vals[0].y - vals[1].y);
           if (touchDist) {
-            controls.dist = THREE.MathUtils.clamp(controls.dist - (d - touchDist) * 0.005, 10, 100);
+            const delta = (d - touchDist) * 0.004;
+            targetParticleScale = THREE.MathUtils.clamp(targetParticleScale + delta, 0.1, 4.0);
           }
           touchDist = d;
         }
       };
-      const up = (e) => {
+
+      const onUp = (e) => {
         pointers.delete(e.pointerId);
         if (pointers.size === 0) touchDist = 0;
         el.releasePointerCapture(e.pointerId);
       };
-      ['pointerdown', 'pointermove', 'pointerup', 'pointercancel'].forEach(name =>
-        el.addEventListener(name, name === 'pointerdown' ? down : name === 'pointermove' ? move : up, { passive: false })
-      );
 
-      // 双指点击：重置视角
-      let lastTwoTap = 0;
+      el.addEventListener('pointerdown', onDown, { passive: false });
+      el.addEventListener('pointermove', onMove, { passive: false });
+      el.addEventListener('pointerup', onUp, { passive: false });
+      el.addEventListener('pointercancel', onUp, { passive: false });
+
+      // 双击（两次快速单指抬起）：重置视角与粒子缩放
+      let lastTap = 0;
       el.addEventListener('pointerup', (e) => {
         if (pointers.size === 0) {
           const now = Date.now();
-          if (now - lastTwoTap < 300) {
-            controls.dist = 36; controls.theta = 0; controls.phi = Math.PI * 0.35;
+          if (now - lastTap < 300) {
+            controls.dist = 40;
+            controls.theta = 0;
+            controls.phi = Math.PI * 0.35;
+            targetParticleScale = 1.0;
           }
-          lastTwoTap = now;
+          lastTap = now;
         }
-      });
+      }, { passive: false });
 
-      // 滚轮缩放
+      // 滚轮：相机远近（与粒子群本体缩放分离）
       el.addEventListener('wheel', (e) => {
         e.preventDefault();
-        controls.dist = THREE.MathUtils.clamp(controls.dist + e.deltaY * 0.02, 10, 100);
+        controls.dist = THREE.MathUtils.clamp(controls.dist + e.deltaY * 0.03, 10, 120);
       }, { passive: false });
     }
 
@@ -373,23 +447,46 @@
       camera.lookAt(controls.target);
     }
 
-    /* ---------- UI 滑块控制 ---------- */
+    /* ---------- UI 实时绑定 ---------- */
     function setupUI() {
-      const $ = id => document.getElementById(id);
-
-      $('pColor').addEventListener('input', (e) => { pMaterial.color.setStyle(e.target.value); $('vColor').textContent = e.target.value; });
-      $('pSize').addEventListener('input', (e) => { pMaterial.size = parseFloat(e.target.value); $('vSize').textContent = e.target.value; });
-      $('pOpacity').addEventListener('input', (e) => { pMaterial.opacity = parseFloat(e.target.value); $('vOpacity').textContent = e.target.value; });
-      $('pSpeed').addEventListener('input', (e) => { CFG.speed = parseFloat(e.target.value); $('vSpeed').textContent = e.target.value; });
-
-      $('pCount').addEventListener('input', (e) => { $('vCount').textContent = e.target.value; });
-      $('pCount').addEventListener('change', (e) => {
-        CFG.count = parseInt(e.target.value);
-        const p = buildParticles(CFG.count);
-        scene.add(p);
-        particles = p;
+      // 粒子颜色：同时更新 material.color 与所有顶点颜色
+      $('pColor').addEventListener('input', (e) => {
+        const hex = e.target.value;
+        const c = new THREE.Color(hex);
+        pMaterial.color.set(c);
+        $('vColor').textContent = hex;
+        if (baseColors) {
+          for (let i = 0; i < baseColors.length / 3; i++) {
+            baseColors[i * 3] = c.r;
+            baseColors[i * 3 + 1] = c.g;
+            baseColors[i * 3 + 2] = c.b;
+          }
+          if (pGeometry) pGeometry.attributes.color.needsUpdate = true;
+        }
       });
 
+      // 粒子大小
+      $('pSize').addEventListener('input', (e) => {
+        pMaterial.size = parseFloat(e.target.value);
+        $('vSize').textContent = e.target.value;
+      });
+
+      // 粒子数量：通过 drawRange 控制，无需重建几何体
+      $('pCount').addEventListener('input', (e) => {
+        currentCount = parseInt(e.target.value);
+        $('vCount').textContent = currentCount;
+        if (pGeometry) {
+          pGeometry.setDrawRange(0, Math.min(currentCount, totalVertices));
+        }
+      });
+
+      // 透明度（默认 0.8，确保可见）
+      $('pOpacity').addEventListener('input', (e) => {
+        pMaterial.opacity = parseFloat(e.target.value);
+        $('vOpacity').textContent = e.target.value;
+      });
+
+      // 加载本地 GLB
       $('btnLoadGLB').addEventListener('click', () => $('glbFileHidden').click());
       $('glbFileHidden').addEventListener('change', (e) => {
         if (e.target.files[0]) loadGLB(URL.createObjectURL(e.target.files[0]));
@@ -399,15 +496,31 @@
     /* ---------- 动画循环 ---------- */
     function animate() {
       rafId = requestAnimationFrame(animate);
+
+      // 相机
       updateCamera();
-      if (model) {
-        model.rotation.y += CFG.speed * 0.6;
-        model.rotation.z += CFG.speed * 0.3;
+
+      // 粒子群本体平滑缩放（膨胀/聚拢）
+      particleScale += (targetParticleScale - particleScale) * 0.06;
+
+      if (pGeometry && basePositions) {
+        const posAttr = pGeometry.attributes.position;
+        const array = posAttr.array;
+        const drawCount = Math.min(currentCount, totalVertices);
+        for (let i = 0; i < drawCount * 3; i += 3) {
+          array[i] = basePositions[i] * particleScale;
+          array[i + 1] = basePositions[i + 1] * particleScale;
+          array[i + 2] = basePositions[i + 2] * particleScale;
+        }
+        posAttr.needsUpdate = true;
       }
+
+      // 缓慢自转
       if (particles) {
         particles.rotation.y += CFG.speed;
-        particles.rotation.x += CFG.speed * 0.45;
+        particles.rotation.x += CFG.speed * 0.5;
       }
+
       renderer.render(scene, camera);
     }
 
